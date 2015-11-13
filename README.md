@@ -3,7 +3,7 @@
 
 # shaman
 
-Lightweight, transparent, api-driven tcp proxy service.
+Small, lightweight, api-driven dns server.
 
 ## Status
 
