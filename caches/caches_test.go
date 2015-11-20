@@ -1,4 +1,4 @@
-package cache_test
+package caches_test
 
 type MapCacher map[string]string
 
@@ -20,5 +20,5 @@ func (self MapCacher) DeleteRecord(key string) error {
 }
 
 func TestL1(t *testing.T) {
-	
+
 }
