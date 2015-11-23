@@ -7,7 +7,7 @@ Small, lightweight, api-driven dns server.
 
 ## Status
 
-Not started
+Incomplete
 
 ## Todo
 
