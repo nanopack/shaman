@@ -1,5 +1,7 @@
 package caches_test
 
+import "testing"
+
 type MapCacher map[string]string
 
 func (self MapCacher) GetRecord(s string) (string, error) {
@@ -17,6 +19,7 @@ func (self MapCacher) ReviseRecord(key, val string) error {
 
 func (self MapCacher) DeleteRecord(key string) error {
 	delete(self, key)
+	return nil
 }
 
 func TestL1(t *testing.T) {
