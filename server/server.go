@@ -1,5 +1,7 @@
 package server
 
+// This has the handler for the DNS server.
+
 // TODO:
 //  - add logging
 //  - test
@@ -17,6 +19,7 @@ var (
 	notFound      = errors.New("Record was not found")
 )
 
+// This receives requests, looks up the result and returns what is found.
 func handleDNSLookup(res dns.ResponseWriter, req *dns.Msg) {
 
 	switch req.Opcode {
@@ -46,6 +49,7 @@ func handleDNSLookup(res dns.ResponseWriter, req *dns.Msg) {
 	}
 }
 
+// This starts the DNS listener
 func StartServer() error {
 	dns.HandleFunc(config.Domain, handleDNSLookup)
 	udpListener := &dns.Server{Addr: config.Address, Net: "udp"}

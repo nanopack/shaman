@@ -1,8 +1,13 @@
 package caches
 
+// This stores entries in a Postgresql database.
+// Postgresql doesn't handle expiring data automatically, this will
+// need to verify data hasn't expired yet.
+
 // TODO:
 //  - add logging
 //  - test
+//  - add routine for removing old data
 
 import (
 	"database/sql"
@@ -15,6 +20,7 @@ type postgresqlCacher struct {
 	db      *sql.DB
 }
 
+// Initializer for the postgres cacher
 func NewPostgresCacher(connection string, expires int) (*postgresqlCacher, error) {
 	db, err := sql.Open("postgres", connection)
 	if err != nil {
@@ -28,6 +34,7 @@ func NewPostgresCacher(connection string, expires int) (*postgresqlCacher, error
 	return &pc, nil
 }
 
+// Create the database table to store entries
 func createTable(pc postgresqlCacher) error {
 	stmt, err := pc.db.Prepare("CREATE TABLE IF NOT EXISTS dns_entries ( key varchar(128) UNIQUE, value text, expires bigint)")
 	defer stmt.Close()
@@ -38,8 +45,9 @@ func createTable(pc postgresqlCacher) error {
 	return nil
 }
 
-func (pc postgresqlCacher) GetRecord(key string) (string, error) {
-	stmt, err := pc.db.Prepare("SELECT value, expires FROM dns_entries WHERE key = $1")
+// Retrieve record and check to make sure it isn't expired, update expires if needed.
+func (self postgresqlCacher) GetRecord(key string) (string, error) {
+	stmt, err := self.db.Prepare("SELECT value, expires FROM dns_entries WHERE key = $1")
 	defer stmt.Close()
 	var value string
 	var expires int64
@@ -51,14 +59,15 @@ func (pc postgresqlCacher) GetRecord(key string) (string, error) {
 		return "", err
 	}
 
-	if pc.expires > 0 {
+	if self.expires > 0 {
 		now := time.Now().Unix()
 		if expires < now {
 			// expired
+			self.DeleteRecord(key)
 			return "", nil
 		}
-		newExpires := now + int64(pc.expires)
-		stmt2, err := pc.db.Prepare("UPDATE dns_entries SET expires=$1 WHERE key = $2")
+		newExpires := now + int64(self.expires)
+		stmt2, err := self.db.Prepare("UPDATE dns_entries SET expires=$1 WHERE key = $2")
 		defer stmt2.Close()
 		if err != nil {
 			return value, err
@@ -68,8 +77,9 @@ func (pc postgresqlCacher) GetRecord(key string) (string, error) {
 	return value, nil
 }
 
-func (pc postgresqlCacher) SetRecord(key string, value string) error {
-	stmt, err := pc.db.Prepare("INSERT INTO dns_entries (key, value) VALUES ($1, $2)")
+// Insert new record in the database, update expires if needed.
+func (self postgresqlCacher) SetRecord(key string, value string) error {
+	stmt, err := self.db.Prepare("INSERT INTO dns_entries (key, value) VALUES ($1, $2)")
 	defer stmt.Close()
 	if err != nil {
 		return err
@@ -78,10 +88,10 @@ func (pc postgresqlCacher) SetRecord(key string, value string) error {
 	if err != nil {
 		return err
 	}
-	if pc.expires > 0 {
+	if self.expires > 0 {
 		now := time.Now().Unix()
-		newExpires := now + int64(pc.expires)
-		stmt2, err := pc.db.Prepare("UPDATE dns_entries SET expires=$1 WHERE key = $2")
+		newExpires := now + int64(self.expires)
+		stmt2, err := self.db.Prepare("UPDATE dns_entries SET expires=$1 WHERE key = $2")
 		defer stmt2.Close()
 		if err != nil {
 			return err
@@ -94,8 +104,9 @@ func (pc postgresqlCacher) SetRecord(key string, value string) error {
 	return nil
 }
 
-func (pc postgresqlCacher) ReviseRecord(key string, value string) error {
-	stmt, err := pc.db.Prepare("UPDATE dns_entries SET value=$1 WHERE key = $2")
+// Update existing record, update expires if needed.
+func (self postgresqlCacher) ReviseRecord(key string, value string) error {
+	stmt, err := self.db.Prepare("UPDATE dns_entries SET value=$1 WHERE key = $2")
 	defer stmt.Close()
 	if err != nil {
 		return err
@@ -104,10 +115,10 @@ func (pc postgresqlCacher) ReviseRecord(key string, value string) error {
 	if err != nil {
 		return err
 	}
-	if pc.expires > 0 {
+	if self.expires > 0 {
 		now := time.Now().Unix()
-		newExpires := now + int64(pc.expires)
-		stmt2, err := pc.db.Prepare("UPDATE dns_entries SET expires=$1 WHERE key = $2")
+		newExpires := now + int64(self.expires)
+		stmt2, err := self.db.Prepare("UPDATE dns_entries SET expires=$1 WHERE key = $2")
 		defer stmt2.Close()
 		if err != nil {
 			return err
@@ -120,8 +131,9 @@ func (pc postgresqlCacher) ReviseRecord(key string, value string) error {
 	return nil
 }
 
-func (pc postgresqlCacher) DeleteRecord(key string) error {
-	stmt, err := pc.db.Prepare("DELETE FROM dns_entries WHERE key = $1")
+// Remove record from database.
+func (self postgresqlCacher) DeleteRecord(key string) error {
+	stmt, err := self.db.Prepare("DELETE FROM dns_entries WHERE key = $1")
 	defer stmt.Close()
 	if err != nil {
 		return err

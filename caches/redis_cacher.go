@@ -1,5 +1,8 @@
 package caches
 
+// This stores entries in a Redis cache.
+// Redis handles the expires, this only needs to refresh the expire.
+
 // TODO:
 //  - add logging
 //  - test
@@ -15,6 +18,7 @@ type redisCacher struct {
 	connection *redis.Pool
 }
 
+// Redis connection pool
 func newPool(server, password string) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
@@ -37,6 +41,7 @@ func newPool(server, password string) *redis.Pool {
 	}
 }
 
+// Initialize a Redis cacher
 func NewRedisCacher(connection string, expires int) (*redisCacher, error) {
 	u, err := url.Parse(connection)
 	password, _ := u.User.Password()
@@ -50,44 +55,41 @@ func NewRedisCacher(connection string, expires int) (*redisCacher, error) {
 	return &rc, nil
 }
 
-func (rc redisCacher) GetRecord(key string) (string, error) {
-	conn := rc.connection.Get()
+// Retrieve record from Redis, update its expire time
+func (self redisCacher) GetRecord(key string) (string, error) {
+	conn := self.connection.Get()
 	defer conn.Close()
 	record, err := redis.String(conn.Do("GET", key))
-	if rc.expires > 0 {
+	if self.expires > 0 {
 		// refresh the expires
-		_, err = conn.Do("EXPIRE", key, rc.expires)
+		_, err = conn.Do("EXPIRE", key, self.expires)
 	}
 	return record, err
 }
 
-func (rc redisCacher) SetRecord(key string, value string) error {
-	conn := rc.connection.Get()
-	defer conn.Close()
-	_, err := conn.Do("SET", key, value)
-	if rc.expires > 0 {
-		// set the expires
-		_, err = conn.Do("EXPIRE", key, rc.expires)
-	}
-	return err
-}
-
-func (rc redisCacher) ReviseRecord(key string, value string) error {
-	conn := rc.connection.Get()
+// Insert record in the cache, reset the expire time
+func (self redisCacher) SetRecord(key string, value string) error {
+	conn := self.connection.Get()
 	defer conn.Close()
 	_, err := conn.Do("SET", key, value)
 	if err != nil {
 		return err
 	}
-	if rc.expires > 0 {
+	if self.expires > 0 {
 		// set the expires
-		_, err = conn.Do("EXPIRE", key, rc.expires)
+		_, err = conn.Do("EXPIRE", key, self.expires)
 	}
 	return err
 }
 
-func (rc redisCacher) DeleteRecord(key string) error {
-	conn := rc.connection.Get()
+// Update entry
+func (self redisCacher) ReviseRecord(key string, value string) error {
+	return self.SetRecord(key, value)
+}
+
+// Remove entry
+func (self redisCacher) DeleteRecord(key string) error {
+	conn := self.connection.Get()
 	defer conn.Close()
 	_, err := conn.Do("DEL", key)
 	return err
