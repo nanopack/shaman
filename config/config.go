@@ -7,7 +7,7 @@ package config
 
 import (
 	"flag"
-	// "os"
+	"github.com/jcelliott/lumber"
 )
 
 var (
@@ -22,6 +22,9 @@ var (
 	ApiCrt     string
 	ApiToken   string
 	ApiAddress string
+	LogLevel   string
+	LogFile    string
+	Log        lumber.Logger
 )
 
 // Initialize configuration
@@ -61,5 +64,19 @@ func init() {
 		"Token for API Access")
 	flag.StringVar(&ApiAddress, "api-address", "127.0.0.1:8443",
 		"Listen address for the API")
+	flag.StringVar(&LogLevel, "log-level", "INFO",
+		"Log level to use")
+	flag.StringVar(&LogFile, "log-file", "",
+		"Log file (blank = log to console)")
 	flag.Parse()
+	if LogFile == "" {
+		Log = lumber.NewConsoleLogger(lumber.LvlInt(LogLevel))
+	} else {
+		var err error
+		Log, err = lumber.NewFileLogger(LogFile, lumber.LvlInt(LogLevel), lumber.ROTATE, 5000, 9, 100)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 }

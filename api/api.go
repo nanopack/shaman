@@ -143,7 +143,12 @@ func getRecord(rw http.ResponseWriter, req *http.Request) {
 	domain := req.URL.Query().Get(":domain")
 	dns.IsDomainName(domain)
 	key := caches.Key(domain, rtype)
-	record, err := caches.FindRecord(key)
+	findReturn := make(chan caches.FindReturn)
+	findOp := caches.FindOp{Key: key, Resp: findReturn}
+	caches.FindOps <- findOp
+	findRet := <-findReturn
+	err := findRet.Err
+	record := findRet.Value
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
 		return
@@ -164,45 +169,60 @@ func getRecord(rw http.ResponseWriter, req *http.Request) {
 }
 
 func addRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := dns.StringToType[req.URL.Query().Get(":rtype")]
+	rtype := req.URL.Query().Get(":rtype")
 	domain := req.URL.Query().Get(":domain")
-	key := caches.Key(domain, rtype)
-	// miek.nl. 3600 IN MX 10 mx.miek.nl.
-	//
-	rr, err := dns.NewRR("")
-	// rr := new()
+	value := req.FormValue("value")
+	ttl := config.TTL
+	key := caches.Key(domain, dns.StringToType[rtype])
+	rrString := fmt.Sprintf("%s %d IN %s %s", domain, ttl, rtype, value)
+	rr, err := dns.NewRR(rrString)
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
 		return
 	}
-	err = caches.AddRecord(key, rr.String())
+	resp := make(chan error)
+	addOp := caches.AddOp{Key: key, Value: rr.String(), Resp: resp}
+	caches.AddOps <- addOp
+	err = <-resp
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
 	}
+	writeBody(rr, rw, http.StatusOK)
 }
 
 func updateRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := dns.StringToType[req.URL.Query().Get(":rtype")]
+	rtype := req.URL.Query().Get(":rtype")
 	domain := req.URL.Query().Get(":domain")
-	key := caches.Key(domain, rtype)
-	rr, err := dns.NewRR("")
+	key := caches.Key(domain, dns.StringToType[rtype])
+	ttl := config.TTL
+	value := req.FormValue("value")
+	rrString := fmt.Sprintf("%s %d IN %s %s", domain, ttl, rtype, value)
+	rr, err := dns.NewRR(rrString)
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
 		return
 	}
-	err = caches.UpdateRecord(key, rr.String())
+	resp := make(chan error)
+	updateOp := caches.UpdateOp{Key: key, Value: rr.String(), Resp: resp}
+	caches.UpdateOps <- updateOp
+	err = <-resp
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
 		return
 	}
+	writeBody(rr, rw, http.StatusOK)
 }
 
 func deleteRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := dns.StringToType[req.URL.Query().Get(":rtype")]
+	rtype := req.URL.Query().Get(":rtype")
 	domain := req.URL.Query().Get(":domain")
-	key := caches.Key(domain, rtype)
-	err := caches.RemoveRecord(key)
+	key := caches.Key(domain, dns.StringToType[rtype])
+	resp := make(chan error)
+	removeOp := caches.RemoveOp{Key: key, Resp: resp}
+	caches.RemoveOps <- removeOp
+	err := <-resp
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
 	}
+	writeBody(nil, rw, http.StatusOK)
 }

@@ -10,6 +10,7 @@ package caches
 //  - add routine for removing old data
 
 import "time"
+import "github.com/nanopack/shaman/config"
 
 type mapCacher struct {
 	expires int
@@ -18,26 +19,30 @@ type mapCacher struct {
 
 // Map cacher initializer
 func NewMapCacher(connection string, expires int) (*mapCacher, error) {
+	config.Log.Info("creating map cacher")
 	mc := mapCacher{expires: expires, db: make(map[string]cacheEntry)}
 	return &mc, nil
 }
 
 // Get record from the map cacher and make sure it hasn't expired yet
 func (self mapCacher) GetRecord(key string) (string, error) {
-	ce := cacheEntry{}
+	var ce cacheEntry
 	ce, ok := self.db[key]
 	if !ok {
+		config.Log.Debug("No Record: %s", key)
 		return "", nil
 	}
 	if self.expires > 0 {
 		if time.Now().Unix() > ce.expires {
 			// expired
+			config.Log.Debug("Expired: %s", key)
 			self.DeleteRecord(key)
 			return "", nil
 		}
 		ce.expires = time.Now().Unix() + int64(self.expires)
 		self.db[key] = ce
 	}
+	config.Log.Debug("Found: %s = %s", key, ce.value)
 	return ce.value, nil
 }
 

@@ -17,19 +17,21 @@ import (
 	"github.com/nanopack/shaman/server"
 )
 
+// main entry point
 func main() {
+	// make channel for errors
 	errors := make(chan error)
-	err := caches.Init()
-	if err != nil {
-		panic(err)
-	}
+	// Start cache engine, api server, and dns server
+	go func() {
+		errors <- caches.StartCache()
+	}()
 	go func() {
 		errors <- api.StartApi()
 	}()
 	go func() {
 		errors <- server.StartServer()
 	}()
-
+	// break if any of them return an error
 	if err := <-errors; err != nil {
 		panic(err)
 	}
