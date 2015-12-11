@@ -33,11 +33,11 @@ func init() {
 	L1Connect = "map://127.0.0.1/"
 	L2Connect = "map://127.0.0.1/"
 	Domain = "example.com"
-	Address = "127.0.0.1:8053"
+	Address = "0.0.0.0:8053"
 	ApiKey = ""
 	ApiCrt = ""
 	ApiToken = ""
-	ApiAddress = "127.0.0.1:8443"
+	ApiAddress = "0.0.0.0:8443"
 	TTL = 60
 	L1Expires = 2 * TTL
 	// read config file options

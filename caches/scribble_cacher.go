@@ -35,6 +35,10 @@ func NewScribbleCacher(connection string, expires int) (*scribbleCacher, error) 
 	return &sC, nil
 }
 
+func (self scribbleCacher) InitializeDatabase() error {
+	return nil
+}
+
 // Retrieve a record from the scribble database, update the expires if
 func (self scribbleCacher) GetRecord(key string) (string, error) {
 	ce := cacheEntry{}

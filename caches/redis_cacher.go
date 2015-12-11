@@ -28,9 +28,11 @@ func newPool(server, password string) *redis.Pool {
 			if err != nil {
 				return nil, err
 			}
-			if _, err := c.Do("AUTH", password); err != nil {
-				c.Close()
-				return nil, err
+			if password != "" {
+				if _, err := c.Do("AUTH", password); err != nil {
+					c.Close()
+					return nil, err
+				}
 			}
 			return c, err
 		},
@@ -44,7 +46,11 @@ func newPool(server, password string) *redis.Pool {
 // Initialize a Redis cacher
 func NewRedisCacher(connection string, expires int) (*redisCacher, error) {
 	u, err := url.Parse(connection)
-	password, _ := u.User.Password()
+	var password string
+	user := u.User
+	if user != nil {
+		password, _ = user.Password()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +59,10 @@ func NewRedisCacher(connection string, expires int) (*redisCacher, error) {
 		connection: newPool(u.Host, password),
 	}
 	return &rc, nil
+}
+
+func (self redisCacher) InitializeDatabase() error {
+	return nil
 }
 
 // Retrieve record from Redis, update its expire time

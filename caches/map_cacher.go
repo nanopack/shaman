@@ -24,6 +24,10 @@ func NewMapCacher(connection string, expires int) (*mapCacher, error) {
 	return &mc, nil
 }
 
+func (self mapCacher) InitializeDatabase() error {
+	return nil
+}
+
 // Get record from the map cacher and make sure it hasn't expired yet
 func (self mapCacher) GetRecord(key string) (string, error) {
 	var ce cacheEntry

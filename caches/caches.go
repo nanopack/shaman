@@ -17,6 +17,7 @@ import (
 )
 
 type Cacher interface {
+	InitializeDatabase() error
 	GetRecord(string) (string, error)
 	SetRecord(string, string) error
 	ReviseRecord(string, string) error
@@ -100,6 +101,10 @@ func initializeCacher(connection string, expires int) (Cacher, error) {
 	default:
 		cacher, err = NewMapCacher(connection, expires)
 	}
+	if err != nil {
+		return nil, err
+	}
+	err = cacher.InitializeDatabase()
 	if err != nil {
 		return nil, err
 	}

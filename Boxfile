@@ -1,0 +1,10 @@
+build:
+  engine: go
+web1:
+  ports:
+    - 53:8053
+    - 443:8443
+postgresql1:
+  name: l2
+redis1:
+  name: l1

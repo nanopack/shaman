@@ -186,6 +186,7 @@ func addRecord(rw http.ResponseWriter, req *http.Request) {
 	err = <-resp
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
+		return
 	}
 	writeBody(rr, rw, http.StatusOK)
 }
@@ -223,6 +224,7 @@ func deleteRecord(rw http.ResponseWriter, req *http.Request) {
 	err := <-resp
 	if err != nil {
 		writeBody(err, rw, http.StatusInternalServerError)
+		return
 	}
 	writeBody(nil, rw, http.StatusOK)
 }
