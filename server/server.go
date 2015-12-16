@@ -7,16 +7,10 @@ package server
 //  - test
 
 import (
-	"errors"
 	"github.com/miekg/dns"
 	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/config"
 	"strings"
-)
-
-var (
-	invalidDomain = errors.New("Invalid domain")
-	notFound      = errors.New("Record was not found")
 )
 
 func stripSubdomain(name string) string {
