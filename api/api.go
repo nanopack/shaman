@@ -34,7 +34,6 @@ func StartApi() error {
 	}
 	auth.Certificate = cert
 	auth.Header = "X-NANOBOX-TOKEN"
-	config.Log.Info(config.ApiToken)
 	return auth.ListenAndServeTLS(config.ApiAddress, config.ApiToken, routes())
 }
 

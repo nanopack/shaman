@@ -8,16 +8,66 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"github.com/miekg/dns"
 	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/config"
+	"strings"
 )
 
 var (
 	invalidDomain = errors.New("Invalid domain")
 	notFound      = errors.New("Record was not found")
 )
+
+func stripSubdomain(name string) string {
+	names := strings.SplitN(name, ".", 2)
+	if len(names) == 2 {
+		return names[1]
+	} else {
+		return ""
+	}
+}
+
+func answerQuestion(question dns.Question) []dns.RR {
+	answers := make([]dns.RR, 0)
+	name := question.Name
+	for {
+		findReturn := make(chan caches.FindReturn)
+		var findOp caches.FindOp
+		var key string
+		if name != question.Name {
+			key = caches.Key("*."+name, question.Qtype)
+		} else {
+			key = caches.Key(name, question.Qtype)
+		}
+		findOp = caches.FindOp{Key: key, Resp: findReturn}
+		caches.FindOps <- findOp
+		findRet := <-findReturn
+		err := findRet.Err
+		record := findRet.Value
+		if err != nil {
+			config.Log.Error("error: %s", err)
+			continue
+		}
+		if record != "" {
+			entry, err := dns.NewRR(record)
+			if err != nil {
+				config.Log.Error("error: %s", err)
+				continue
+			}
+			entry.Header().Name = question.Name
+			answers = append(answers, entry)
+		}
+		if len(answers) > 0 {
+			break
+		}
+		name = stripSubdomain(name)
+		if len(name) == 0 {
+			break
+		}
+	}
+	return answers
+}
 
 // This receives requests, looks up the result and returns what is found.
 func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
@@ -30,32 +80,13 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 		message.Answer = make([]dns.RR, 0)
 
 		for _, question := range message.Question {
-			findReturn := make(chan caches.FindReturn)
-			var findOp caches.FindOp
-			// findOp.key = caches.Key(question.Name, question.Qtype)
-			// findOp.resp = findReturn
-			findOp = caches.FindOp{Key: caches.Key(question.Name, question.Qtype), Resp: findReturn}
-			caches.FindOps <- findOp
-			findRet := <-findReturn
-			err := findRet.Err
-			record := findRet.Value
-			if err != nil {
-				config.Log.Error("error: %s", err)
-				continue
+			answers := answerQuestion(question)
+			for i := range answers {
+				message.Answer = append(message.Answer, answers[i])
 			}
-			if record == "" {
-				// TESTING ONLY!!!
-				record = fmt.Sprintf("%s %d %s 127.0.0.1", question.Name, config.TTL, dns.TypeToString[question.Qtype])
-				config.Log.Debug("nothing found, setting to 127.0.0.1")
-				// continue
-			}
-			entry, err := dns.NewRR(record)
-			if err != nil {
-				config.Log.Error("error: %s\n", err)
-				continue
-			}
-			config.Log.Info("record: %s\n", entry)
-			message.Answer = append(message.Answer, entry)
+		}
+		if len(message.Answer) == 0 {
+			message.Rcode = dns.RcodeNameError
 		}
 		res.WriteMsg(message)
 	default:
