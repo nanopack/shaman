@@ -65,10 +65,9 @@ func answerQuestion(question dns.Question) []dns.RR {
 
 // This receives requests, looks up the result and returns what is found.
 func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
+	message := new(dns.Msg)
 	switch req.Opcode {
 	case dns.OpcodeQuery:
-
-		message := new(dns.Msg)
 		message.SetReply(req)
 		message.Compress = false
 		message.Answer = make([]dns.RR, 0)
@@ -82,9 +81,10 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 		if len(message.Answer) == 0 {
 			message.Rcode = dns.RcodeNameError
 		}
-		res.WriteMsg(message)
 	default:
+		message = message.SetRcode(req, dns.RcodeNotImplemented)
 	}
+	res.WriteMsg(message)
 }
 
 // This starts the DNS listener
