@@ -8,106 +8,34 @@ package api
 //  - test
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"github.com/gorilla/pat"
 	"github.com/miekg/dns"
+	nanoauth "github.com/nanobox-io/golang-nanoauth"
 	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/config"
-	"math/big"
 	"net/http"
-	"time"
 )
 
-type handler struct {
-	child http.Handler
-}
-
-func (self handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if req.Header.Get("X-SHAMAN-TOKEN") != config.ApiToken {
-		rw.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
-	self.child.ServeHTTP(rw, req)
-}
-
-func loadKeys() (*tls.Certificate, error) {
-	crt, err := tls.LoadX509KeyPair(config.ApiCrt, config.ApiKey)
-	return &crt, err
-}
-
-func generateKeys() (*tls.Certificate, error) {
-	host := fmt.Sprintf("shaman.%s", config.Domain)
-
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-
-	notBefore := time.Now()
-
-	notAfter := notBefore.Add(365 * 24 * 100 * time.Hour) // 100 years..
-
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		return nil, err
-	}
-
-	template := x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{config.Domain},
-		},
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
-
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-	}
-
-	template.DNSNames = append(template.DNSNames, host)
-
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
-	if err != nil {
-		return nil, err
-	}
-
-	cert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	key := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
-	c, err := tls.X509KeyPair(cert, key)
-	return &c, err
-}
+var auth nanoauth.Auth
 
 func StartApi() error {
 	var cert *tls.Certificate
 	var err error
 	if config.ApiCrt == "" {
-		cert, err = generateKeys()
+		cert, err = nanoauth.Generate("shaman.nanobox.io")
 	} else {
-		cert, err = loadKeys()
+		cert, err = nanoauth.Load(config.ApiCrt, config.ApiKey, config.ApiKeyPassword)
 	}
 	if err != nil {
 		return err
 	}
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{*cert},
-	}
-	tlsConfig.BuildNameToCertificate()
-	tlsListener, err := tls.Listen("tcp", config.ApiAddress, tlsConfig)
-	if err != nil {
-		return err
-	}
-	h := routes()
-	return http.Serve(tlsListener, handler{child: h})
+	auth.Certificate = cert
+	auth.Header = "X-NANOBOX-TOKEN"
+	config.Log.Info(config.ApiToken)
+	return auth.ListenAndServeTLS(config.ApiAddress, config.ApiToken, routes())
 }
 
 func routes() *pat.Router {
@@ -116,6 +44,7 @@ func routes() *pat.Router {
 	router.Post("/records/{rtype}/{domain}", handleRequest(addRecord))
 	router.Put("/records/{rtype}/{domain}", handleRequest(updateRecord))
 	router.Delete("/records/{rtype}/{domain}", handleRequest(deleteRecord))
+	router.Get("/records", handleRequest(listRecords))
 	return router
 }
 
@@ -227,4 +156,16 @@ func deleteRecord(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	writeBody(nil, rw, http.StatusOK)
+}
+
+func listRecords(rw http.ResponseWriter, req *http.Request) {
+	resp := make(chan caches.ListReturn)
+	listOp := caches.ListOp{Resp: resp}
+	caches.ListOps <- listOp
+	listReturn := <-resp
+	if listReturn.Err != nil {
+		writeBody(listReturn.Err, rw, http.StatusInternalServerError)
+		return
+	}
+	writeBody(listReturn.Values, rw, http.StatusOK)
 }

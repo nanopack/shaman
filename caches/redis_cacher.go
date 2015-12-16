@@ -104,3 +104,30 @@ func (self redisCacher) DeleteRecord(key string) error {
 	_, err := conn.Do("DEL", key)
 	return err
 }
+
+func (self redisCacher) ListRecords() ([]string, error) {
+	entries := make([]string, 0)
+	iter := 0
+	conn := self.connection.Get()
+	defer conn.Close()
+	for {
+		arr, err := redis.MultiBulk(conn.Do("SCAN", iter))
+		if err != nil {
+			return entries, err
+		}
+		iter, _ = redis.Int(arr[0], nil)
+		keys, _ := redis.Strings(arr[1], nil)
+		for key := range keys {
+			record, err := redis.String(conn.Do("GET", key))
+			if err != nil {
+				return entries, err
+			}
+			entries = append(entries, record)
+		}
+
+		if iter == 0 {
+			break
+		}
+	}
+	return entries, nil
+}

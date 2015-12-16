@@ -67,3 +67,11 @@ func (self mapCacher) DeleteRecord(key string) error {
 	delete(self.db, key)
 	return nil
 }
+
+func (self mapCacher) ListRecords() ([]string, error) {
+	entries := make([]string, 0)
+	for ce := range self.db {
+		entries = append(entries, self.db[ce].value)
+	}
+	return entries, nil
+}

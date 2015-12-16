@@ -17,6 +17,7 @@ func init() {
 	ShamanCli.PersistentFlags().StringVarP(&config.AuthToken, "auth", "A", "", "Shaman auth token")
 	ShamanCli.PersistentFlags().StringVarP(&config.Host, "host", "H", "127.0.0.1", "Shaman hostname/IP")
 	ShamanCli.PersistentFlags().IntVarP(&config.Port, "port", "p", 8443, "Shaman admin port")
+	ShamanCli.PersistentFlags().BoolVarP(&config.Insecure, "insecure", "i", false, "Disable tls key checking")
 
 	ShamanCli.AddCommand(addCmd)
 	ShamanCli.AddCommand(removeCmd)

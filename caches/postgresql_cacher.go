@@ -112,3 +112,26 @@ func (self postgresqlCacher) DeleteRecord(key string) error {
 	defer rows.Close()
 	return nil
 }
+
+func (self postgresqlCacher) ListRecords() ([]string, error) {
+	entries := make([]string, 0)
+	now := time.Now().Unix()
+	var value string
+	var expires int64
+	rows, err := self.db.Query("SELECT value, expires FROM dns_entries")
+	if err != nil {
+		config.Log.Error("error: %s", err)
+		return entries, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&value, &expires)
+		if err != nil {
+			config.Log.Error("Error: %s", err)
+		}
+		if expires > now {
+			entries = append(entries, value)
+		}
+	}
+	return entries, nil
+}

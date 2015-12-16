@@ -84,3 +84,18 @@ func (self scribbleCacher) ReviseRecord(key string, value string) error {
 func (self scribbleCacher) DeleteRecord(key string) error {
 	return self.scribbleDb.Delete("records", key)
 }
+
+func (self scribbleCacher) ListRecords() ([]string, error) {
+	entries := make([]string, 0)
+	now := time.Now().Unix()
+	ces := []cacheEntry{}
+	if err := self.scribbleDb.Read("records", "", ces); err != nil {
+		return entries, err
+	}
+	for ce := range ces {
+		if ces[ce].expires > now {
+			entries = append(entries, ces[ce].value)
+		}
+	}
+	return entries, nil
+}
