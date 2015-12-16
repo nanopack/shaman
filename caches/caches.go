@@ -22,6 +22,7 @@ type Cacher interface {
 	SetRecord(string, string) error
 	ReviseRecord(string, string) error
 	DeleteRecord(string) error
+	ListRecords() ([]string, error)
 }
 
 type cacheEntry struct {
@@ -32,6 +33,11 @@ type cacheEntry struct {
 type FindReturn struct {
 	Err   error
 	Value string
+}
+
+type ListReturn struct {
+	Err    error
+	Values []string
 }
 
 type AddOp struct {
@@ -56,11 +62,16 @@ type FindOp struct {
 	Resp chan FindReturn
 }
 
+type ListOp struct {
+	Resp chan ListReturn
+}
+
 var (
 	AddOps    = make(chan AddOp)
 	RemoveOps = make(chan RemoveOp)
 	UpdateOps = make(chan UpdateOp)
 	FindOps   = make(chan FindOp)
+	ListOps   = make(chan ListOp)
 	L1        Cacher
 	L2        Cacher
 )
@@ -78,6 +89,9 @@ func StartCache() error {
 		case findOp := <-FindOps:
 			value, err := findRecord(findOp.Key)
 			findOp.Resp <- FindReturn{Err: err, Value: value}
+		case listOp := <-ListOps:
+			values, err := listRecords()
+			listOp.Resp <- ListReturn{Err: err, Values: values}
 		}
 	}
 	return nil
@@ -218,4 +232,14 @@ func findRecord(key string) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+func listRecords() ([]string, error) {
+	if L2 != nil {
+		return L2.ListRecords()
+	}
+	if L1 != nil {
+		return L1.ListRecords()
+	}
+	return []string{}, nil
 }

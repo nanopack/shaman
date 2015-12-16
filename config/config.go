@@ -11,20 +11,21 @@ import (
 )
 
 var (
-	L1Connect  string
-	L2Connect  string
-	L1Expires  int
-	L2Expires  int
-	Domain     string
-	TTL        int
-	Address    string
-	ApiKey     string
-	ApiCrt     string
-	ApiToken   string
-	ApiAddress string
-	LogLevel   string
-	LogFile    string
-	Log        lumber.Logger
+	L1Connect      string
+	L2Connect      string
+	L1Expires      int
+	L2Expires      int
+	Domain         string
+	TTL            int
+	Address        string
+	ApiKey         string
+	ApiKeyPassword string
+	ApiCrt         string
+	ApiToken       string
+	ApiAddress     string
+	LogLevel       string
+	LogFile        string
+	Log            lumber.Logger
 )
 
 // Initialize configuration
@@ -58,6 +59,8 @@ func init() {
 		"Listen address for DNS requests")
 	flag.StringVar(&ApiKey, "api-key", "",
 		"Path to SSL key for API access")
+	flag.StringVar(&ApiKeyPassword, "api-key-password", "",
+		"Password for SSL key")
 	flag.StringVar(&ApiCrt, "api-crt", "",
 		"Path to SSL crt for API access")
 	flag.StringVar(&ApiToken, "api-token", "",

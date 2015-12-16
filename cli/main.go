@@ -4,6 +4,10 @@ package main
 //  - everything
 //  - test
 
-func main() {
+import (
+	"github.com/nanopack/shaman/cli/commands"
+)
 
+func main() {
+	commands.ShamanCli.Execute()
 }
