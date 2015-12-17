@@ -77,7 +77,6 @@ var (
 )
 
 func StartCache() error {
-	initCache()
 	for {
 		select {
 		case addOp := <-AddOps:
@@ -126,7 +125,7 @@ func initializeCacher(connection string, expires int) (Cacher, error) {
 }
 
 // Create L1 and L2 from the config
-func initCache() {
+func InitCache() {
 	config.Log.Info("Initializing caches")
 	var err error
 	L1, err = initializeCacher(config.L1Connect, config.L1Expires)

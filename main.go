@@ -22,6 +22,7 @@ func main() {
 	// make channel for errors
 	errors := make(chan error)
 	// Start cache engine, api server, and dns server
+	caches.InitCache()
 	go func() {
 		errors <- caches.StartCache()
 	}()
