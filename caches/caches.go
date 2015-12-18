@@ -18,6 +18,7 @@ import (
 
 type Cacher interface {
 	InitializeDatabase() error
+	ClearDatabase() error
 	GetRecord(string) (string, error)
 	SetRecord(string, string) error
 	ReviseRecord(string, string) error
@@ -25,9 +26,9 @@ type Cacher interface {
 	ListRecords() ([]string, error)
 }
 
-type cacheEntry struct {
-	expires int64
-	value   string
+type CacheEntry struct {
+	Expires int64
+	Value   string
 }
 
 type FindReturn struct {
@@ -77,7 +78,6 @@ var (
 )
 
 func StartCache() error {
-	initCache()
 	for {
 		select {
 		case addOp := <-AddOps:
@@ -126,7 +126,7 @@ func initializeCacher(connection string, expires int) (Cacher, error) {
 }
 
 // Create L1 and L2 from the config
-func initCache() {
+func InitCache() {
 	config.Log.Info("Initializing caches")
 	var err error
 	L1, err = initializeCacher(config.L1Connect, config.L1Expires)

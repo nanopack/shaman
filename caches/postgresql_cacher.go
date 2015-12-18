@@ -46,6 +46,16 @@ func (self postgresqlCacher) InitializeDatabase() error {
 	return nil
 }
 
+func (self postgresqlCacher) ClearDatabase() error {
+	rows, err := self.db.Query("DELETE FROM dns_entries")
+	if err != nil {
+		config.Log.Error("error: %s", err)
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
 // Retrieve record and check to make sure it isn't expired, update expires if needed.
 func (self postgresqlCacher) GetRecord(key string) (string, error) {
 	var value string
@@ -54,8 +64,12 @@ func (self postgresqlCacher) GetRecord(key string) (string, error) {
 	var rows *sql.Rows
 	err = self.db.QueryRow("SELECT value, expires FROM dns_entries WHERE key = $1", key).Scan(&value, &expires)
 	if err != nil {
-		config.Log.Error("error: %s, %s", err, value)
-		return value, err
+		if err == sql.ErrNoRows {
+			return "", nil
+		} else {
+			config.Log.Error("error: %s, %s", err, value)
+			return value, err
+		}
 	}
 
 	if self.expires > 0 {
@@ -66,7 +80,7 @@ func (self postgresqlCacher) GetRecord(key string) (string, error) {
 			return "", nil
 		}
 		newExpires := now + int64(self.expires)
-		rows, err = self.db.Query("UPDATE dns_entries SET expires=$1 WHERE key = '$2'", newExpires, key)
+		rows, err = self.db.Query("UPDATE dns_entries SET expires=$1 WHERE key = $2", newExpires, key)
 		if err != nil {
 			config.Log.Error("error: %s", err)
 			return value, err
@@ -93,7 +107,7 @@ func (self postgresqlCacher) SetRecord(key string, value string) error {
 func (self postgresqlCacher) ReviseRecord(key string, value string) error {
 	now := time.Now().Unix()
 	expires := now + int64(self.expires)
-	rows, err := self.db.Query("UPDATE dns_entries SET value=$1 expires=$2 WHERE key = $3", value, expires, key)
+	rows, err := self.db.Query("UPDATE dns_entries SET value=$1, expires=$2 WHERE key = $3", value, expires, key)
 	if err != nil {
 		config.Log.Error("error: %s", err)
 		return err
@@ -129,9 +143,14 @@ func (self postgresqlCacher) ListRecords() ([]string, error) {
 		if err != nil {
 			config.Log.Error("Error: %s", err)
 		}
-		if expires > now {
+		if self.expires > 0 {
+			if expires > now {
+				entries = append(entries, value)
+			}
+		} else {
 			entries = append(entries, value)
 		}
+
 	}
 	return entries, nil
 }

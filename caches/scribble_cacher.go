@@ -7,7 +7,9 @@ package caches
 //  - test
 
 import (
+	"encoding/json"
 	scribble "github.com/nanobox-io/golang-scribble"
+	"github.com/nanopack/shaman/config"
 	"net/url"
 	"time"
 )
@@ -39,27 +41,32 @@ func (self scribbleCacher) InitializeDatabase() error {
 	return nil
 }
 
+func (self scribbleCacher) ClearDatabase() error {
+	self.scribbleDb.Delete("records", "")
+	return nil
+}
+
 // Retrieve a record from the scribble database, update the expires if
 func (self scribbleCacher) GetRecord(key string) (string, error) {
-	ce := cacheEntry{}
-	if err := self.scribbleDb.Read("records", key, ce); err != nil {
-		return "", err
+	ce := CacheEntry{}
+	if err := self.scribbleDb.Read("records", key, &ce); err != nil {
+		config.Log.Error("Error: %s", err)
+		return "", nil
 	}
 	if self.expires > 0 {
 		now := time.Now().Unix()
-		if ce.expires < now {
+		if ce.Expires < now {
 			// expired
 			self.DeleteRecord(key)
 			return "", nil
 		}
 		newExpires := now + int64(self.expires)
-		ce.expires = newExpires
+		ce.Expires = newExpires
 		if err := self.scribbleDb.Write("records", key, ce); err != nil {
-			return ce.value, nil
+			return ce.Value, nil
 		}
 	}
-
-	return ce.value, nil
+	return ce.Value, nil
 }
 
 // Set record in scribble database
@@ -68,9 +75,9 @@ func (self scribbleCacher) SetRecord(key string, value string) error {
 	if self.expires > 0 {
 		expires = time.Now().Unix() + int64(self.expires)
 	}
-	ce := cacheEntry{
-		expires: expires,
-		value:   value,
+	ce := CacheEntry{
+		Expires: expires,
+		Value:   value,
 	}
 	return self.scribbleDb.Write("records", key, ce)
 }
@@ -88,13 +95,19 @@ func (self scribbleCacher) DeleteRecord(key string) error {
 func (self scribbleCacher) ListRecords() ([]string, error) {
 	entries := make([]string, 0)
 	now := time.Now().Unix()
-	ces := []cacheEntry{}
-	if err := self.scribbleDb.Read("records", "", ces); err != nil {
+	values, err := self.scribbleDb.ReadAll("records")
+	if err != nil {
 		return entries, err
 	}
-	for ce := range ces {
-		if ces[ce].expires > now {
-			entries = append(entries, ces[ce].value)
+	for i := range values {
+		var ce CacheEntry
+		json.Unmarshal([]byte(values[i]), &ce)
+		if self.expires != 0 {
+			if ce.Expires > now {
+				entries = append(entries, ce.Value)
+			}
+		} else {
+			entries = append(entries, ce.Value)
 		}
 	}
 	return entries, nil
