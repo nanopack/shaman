@@ -18,6 +18,7 @@ import (
 
 type Cacher interface {
 	InitializeDatabase() error
+	ClearDatabase() error
 	GetRecord(string) (string, error)
 	SetRecord(string, string) error
 	ReviseRecord(string, string) error
@@ -25,9 +26,9 @@ type Cacher interface {
 	ListRecords() ([]string, error)
 }
 
-type cacheEntry struct {
-	expires int64
-	value   string
+type CacheEntry struct {
+	Expires int64
+	Value   string
 }
 
 type FindReturn struct {

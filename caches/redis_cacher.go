@@ -65,11 +65,21 @@ func (self redisCacher) InitializeDatabase() error {
 	return nil
 }
 
+func (self redisCacher) ClearDatabase() error {
+	conn := self.connection.Get()
+	defer conn.Close()
+	_, err := conn.Do("FLUSHALL")
+	return err
+}
+
 // Retrieve record from Redis, update its expire time
 func (self redisCacher) GetRecord(key string) (string, error) {
 	conn := self.connection.Get()
 	defer conn.Close()
 	record, err := redis.String(conn.Do("GET", key))
+	if err == redis.ErrNil {
+		return "", nil
+	}
 	if self.expires > 0 {
 		// refresh the expires
 		_, err = conn.Do("EXPIRE", key, self.expires)
@@ -118,11 +128,14 @@ func (self redisCacher) ListRecords() ([]string, error) {
 		iter, _ = redis.Int(arr[0], nil)
 		keys, _ := redis.Strings(arr[1], nil)
 		for key := range keys {
-			record, err := redis.String(conn.Do("GET", key))
+			record, err := redis.String(conn.Do("GET", keys[key]))
 			if err != nil {
-				return entries, err
+				if err != redis.ErrNil {
+					return entries, err
+				}
+			} else {
+				entries = append(entries, record)
 			}
-			entries = append(entries, record)
 		}
 
 		if iter == 0 {

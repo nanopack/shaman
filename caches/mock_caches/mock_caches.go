@@ -38,6 +38,16 @@ func (_mr *_MockCacherRecorder) InitializeDatabase() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "InitializeDatabase")
 }
 
+func (_m *MockCacher) ClearDatabase() error {
+	ret := _m.ctrl.Call(_m, "ClearDatabase")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (_mr *_MockCacherRecorder) ClearDatabase() *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ClearDatabase")
+}
+
 func (_m *MockCacher) GetRecord(_param0 string) (string, error) {
 	ret := _m.ctrl.Call(_m, "GetRecord", _param0)
 	ret0, _ := ret[0].(string)

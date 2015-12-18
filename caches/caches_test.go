@@ -18,19 +18,24 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestGetRecordL1(t *testing.T) {
+func initializeCaches(t *testing.T) (*mock_caches.MockCacher, *mock_caches.MockCacher) {
 	caches.InitCache()
 	ctrl1 := gomock.NewController(t)
 	defer ctrl1.Finish()
 	ctrl2 := gomock.NewController(t)
 	defer ctrl2.Finish()
-	L1 := mock_caches.NewMockCacher(ctrl1)
-	L2 := mock_caches.NewMockCacher(ctrl2)
-	caches.L1 = L1
-	caches.L2 = L2
+	l1 := mock_caches.NewMockCacher(ctrl1)
+	l2 := mock_caches.NewMockCacher(ctrl2)
+	caches.L1 = l1
+	caches.L2 = l2
 	go caches.StartCache()
+	return l1, l2
+}
+
+func TestFindRecordL1(t *testing.T) {
+	l1, _ := initializeCaches(t)
 	gomock.InOrder(
-		L1.EXPECT().GetRecord("1-key").Return("found", nil),
+		l1.EXPECT().GetRecord("1-key").Return("found", nil),
 	)
 	findReturn := make(chan caches.FindReturn)
 	findOp := caches.FindOp{Key: "1-key", Resp: findReturn}
@@ -46,21 +51,12 @@ func TestGetRecordL1(t *testing.T) {
 	}
 }
 
-func TestGetRecordL2(t *testing.T) {
-	caches.InitCache()
-	ctrl1 := gomock.NewController(t)
-	defer ctrl1.Finish()
-	ctrl2 := gomock.NewController(t)
-	defer ctrl2.Finish()
-	L1 := mock_caches.NewMockCacher(ctrl1)
-	L2 := mock_caches.NewMockCacher(ctrl2)
-	caches.L1 = L1
-	caches.L2 = L2
-	go caches.StartCache()
+func TestFindRecordL2(t *testing.T) {
+	l1, l2 := initializeCaches(t)
 	gomock.InOrder(
-		L1.EXPECT().GetRecord("1-key").Return("", nil),
-		L2.EXPECT().GetRecord("1-key").Return("found", nil),
-		L1.EXPECT().SetRecord("1-key", "found").Return(nil),
+		l1.EXPECT().GetRecord("1-key").Return("", nil),
+		l2.EXPECT().GetRecord("1-key").Return("found", nil),
+		l1.EXPECT().SetRecord("1-key", "found").Return(nil),
 	)
 	findReturn := make(chan caches.FindReturn)
 	findOp := caches.FindOp{Key: "1-key", Resp: findReturn}
@@ -77,19 +73,10 @@ func TestGetRecordL2(t *testing.T) {
 }
 
 func TestAddRecord(t *testing.T) {
-	caches.InitCache()
-	ctrl1 := gomock.NewController(t)
-	defer ctrl1.Finish()
-	ctrl2 := gomock.NewController(t)
-	defer ctrl2.Finish()
-	L1 := mock_caches.NewMockCacher(ctrl1)
-	L2 := mock_caches.NewMockCacher(ctrl2)
-	caches.L1 = L1
-	caches.L2 = L2
-	go caches.StartCache()
+	l1, l2 := initializeCaches(t)
 	gomock.InOrder(
-		L2.EXPECT().SetRecord("1-key", "found").Return(nil),
-		L1.EXPECT().SetRecord("1-key", "found").Return(nil),
+		l2.EXPECT().SetRecord("1-key", "found").Return(nil),
+		l1.EXPECT().SetRecord("1-key", "found").Return(nil),
 	)
 	resp := make(chan error)
 	addOp := caches.AddOp{Key: "1-key", Value: "found", Resp: resp}
@@ -101,19 +88,10 @@ func TestAddRecord(t *testing.T) {
 }
 
 func TestUpdateRecord(t *testing.T) {
-	caches.InitCache()
-	ctrl1 := gomock.NewController(t)
-	defer ctrl1.Finish()
-	ctrl2 := gomock.NewController(t)
-	defer ctrl2.Finish()
-	L1 := mock_caches.NewMockCacher(ctrl1)
-	L2 := mock_caches.NewMockCacher(ctrl2)
-	caches.L1 = L1
-	caches.L2 = L2
-	go caches.StartCache()
+	l1, l2 := initializeCaches(t)
 	gomock.InOrder(
-		L2.EXPECT().ReviseRecord("1-key", "found").Return(nil),
-		L1.EXPECT().ReviseRecord("1-key", "found").Return(nil),
+		l2.EXPECT().ReviseRecord("1-key", "found").Return(nil),
+		l1.EXPECT().ReviseRecord("1-key", "found").Return(nil),
 	)
 	resp := make(chan error)
 	updateOp := caches.UpdateOp{Key: "1-key", Value: "found", Resp: resp}
@@ -125,19 +103,10 @@ func TestUpdateRecord(t *testing.T) {
 }
 
 func TestRemoveRecord(t *testing.T) {
-	caches.InitCache()
-	ctrl1 := gomock.NewController(t)
-	defer ctrl1.Finish()
-	ctrl2 := gomock.NewController(t)
-	defer ctrl2.Finish()
-	L1 := mock_caches.NewMockCacher(ctrl1)
-	L2 := mock_caches.NewMockCacher(ctrl2)
-	caches.L1 = L1
-	caches.L2 = L2
-	go caches.StartCache()
+	l1, l2 := initializeCaches(t)
 	gomock.InOrder(
-		L2.EXPECT().DeleteRecord("1-key").Return(nil),
-		L1.EXPECT().DeleteRecord("1-key").Return(nil),
+		l2.EXPECT().DeleteRecord("1-key").Return(nil),
+		l1.EXPECT().DeleteRecord("1-key").Return(nil),
 	)
 	resp := make(chan error)
 	removeOp := caches.RemoveOp{Key: "1-key", Resp: resp}
@@ -149,18 +118,9 @@ func TestRemoveRecord(t *testing.T) {
 }
 
 func TestListRecords(t *testing.T) {
-	caches.InitCache()
-	ctrl1 := gomock.NewController(t)
-	defer ctrl1.Finish()
-	ctrl2 := gomock.NewController(t)
-	defer ctrl2.Finish()
-	L1 := mock_caches.NewMockCacher(ctrl1)
-	L2 := mock_caches.NewMockCacher(ctrl2)
-	caches.L1 = L1
-	caches.L2 = L2
-	go caches.StartCache()
+	_, l2 := initializeCaches(t)
 	gomock.InOrder(
-		L2.EXPECT().ListRecords().Return([]string{"found"}, nil),
+		l2.EXPECT().ListRecords().Return([]string{"found"}, nil),
 	)
 	resp := make(chan caches.ListReturn)
 	listOp := caches.ListOp{Resp: resp}
