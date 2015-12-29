@@ -1,9 +1,10 @@
 package caches_test
 
 import (
-	"github.com/nanopack/shaman/caches"
 	"testing"
 	"time"
+
+	"github.com/nanopack/shaman/caches"
 )
 
 func initializeMapCacher(expires int) caches.Cacher {

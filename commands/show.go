@@ -3,22 +3,28 @@ package commands
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/nanopack/shaman/cli/config"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/nanopack/shaman/config"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List entries in shaman database",
+var showCmd = &cobra.Command{
+	Use:   "show",
+	Short: "Show entry in shaman database",
 	Long:  ``,
 
-	Run: list,
+	Run: show,
 }
 
-func list(ccmd *cobra.Command, args []string) {
+func show(ccmd *cobra.Command, args []string) {
+	if len(args) != 2 {
+		fmt.Fprintln(os.Stderr, "Missing arguments: Needs record type and domain")
+		os.Exit(1)
+	}
 	var client *http.Client
 	if config.Insecure {
 		tr := &http.Transport{
@@ -28,15 +34,18 @@ func list(ccmd *cobra.Command, args []string) {
 	} else {
 		client = http.DefaultClient
 	}
+	rtype := args[0]
+	domain := args[1]
+	fmt.Println("rtype:", rtype, "domain:", domain)
 
-	uri := fmt.Sprintf("https://%s:%d/records", config.Host, config.Port)
+	uri := fmt.Sprintf("https://%s:%s/records/%s/%s", config.ApiHost, config.ApiPort, rtype, domain)
 	fmt.Println(uri)
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
-	req.Header.Add("X-NANOBOX-TOKEN", config.AuthToken)
+	req.Header.Add("X-NANOBOX-TOKEN", config.ApiToken)
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)

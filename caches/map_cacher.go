@@ -9,8 +9,11 @@ package caches
 //  - test
 //  - add routine for removing old data
 
-import "time"
-import "github.com/nanopack/shaman/config"
+import (
+	"time"
+
+	"github.com/nanopack/shaman/config"
+)
 
 type mapCacher struct {
 	expires int
