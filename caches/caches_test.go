@@ -1,13 +1,15 @@
 package caches_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/jcelliott/lumber"
+
 	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/caches/mock_caches"
 	"github.com/nanopack/shaman/config"
-	"os"
-	"testing"
 )
 
 func TestMain(m *testing.M) {

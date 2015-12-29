@@ -8,10 +8,12 @@ package caches
 
 import (
 	"encoding/json"
-	scribble "github.com/nanobox-io/golang-scribble"
-	"github.com/nanopack/shaman/config"
 	"net/url"
 	"time"
+
+	scribble "github.com/nanobox-io/golang-scribble"
+
+	"github.com/nanopack/shaman/config"
 )
 
 type scribbleCacher struct {

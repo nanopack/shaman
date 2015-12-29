@@ -11,9 +11,11 @@ package caches
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
-	"github.com/nanopack/shaman/config"
 	"time"
+
+	_ "github.com/lib/pq"
+
+	"github.com/nanopack/shaman/config"
 )
 
 type postgresqlCacher struct {

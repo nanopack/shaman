@@ -3,11 +3,13 @@ package commands
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/nanopack/shaman/cli/config"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/nanopack/shaman/config"
 )
 
 var removeCmd = &cobra.Command{
@@ -36,14 +38,14 @@ func remove(ccmd *cobra.Command, args []string) {
 	domain := args[1]
 	fmt.Println("rtype:", rtype, "domain:", domain)
 
-	uri := fmt.Sprintf("https://%s:%d/records/%s/%s", config.Host, config.Port, rtype, domain)
+	uri := fmt.Sprintf("https://%s:%s/records/%s/%s", config.ApiHost, config.ApiPort, rtype, domain)
 	fmt.Println(uri)
 	req, err := http.NewRequest("DELETE", uri, nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
-	req.Header.Add("X-NANOBOX-TOKEN", config.AuthToken)
+	req.Header.Add("X-NANOBOX-TOKEN", config.ApiToken)
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)

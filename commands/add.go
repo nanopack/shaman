@@ -4,27 +4,29 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/nanopack/shaman/cli/config"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/nanopack/shaman/config"
 )
 
-var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update entry in shaman database",
+var addCmd = &cobra.Command{
+	Use:   "add",
+	Short: "Add entry into shaman database",
 	Long:  ``,
 
-	Run: update,
+	Run: add,
 }
 
-type updateBody struct {
+type addBody struct {
 	value string
 }
 
-func update(ccmd *cobra.Command, args []string) {
+func add(ccmd *cobra.Command, args []string) {
 	if len(args) != 3 {
 		fmt.Fprintln(os.Stderr, "Missing arguments: Needs record type, domain, and value")
 		os.Exit(1)
@@ -45,14 +47,14 @@ func update(ccmd *cobra.Command, args []string) {
 	data := url.Values{}
 	data.Set("value", value)
 
-	uri := fmt.Sprintf("https://%s:%d/records/%s/%s?%s", config.Host, config.Port, rtype, domain, data.Encode())
+	uri := fmt.Sprintf("https://%s:%s/records/%s/%s?%s", config.ApiHost, config.ApiPort, rtype, domain, data.Encode())
 	fmt.Println(uri)
-	req, err := http.NewRequest("PUT", uri, bytes.NewBufferString(data.Encode()))
+	req, err := http.NewRequest("POST", uri, bytes.NewBufferString(data.Encode()))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
-	req.Header.Add("X-NANOBOX-TOKEN", config.AuthToken)
+	req.Header.Add("X-NANOBOX-TOKEN", config.ApiToken)
 	res, err := client.Do(req)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)

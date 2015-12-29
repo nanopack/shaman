@@ -7,10 +7,13 @@ package server
 //  - test
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/miekg/dns"
+
 	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/config"
-	"strings"
 )
 
 func stripSubdomain(name string) string {
@@ -90,6 +93,6 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 // This starts the DNS listener
 func StartServer() error {
 	dns.HandleFunc(config.Domain, handlerFunc)
-	udpListener := &dns.Server{Addr: config.Address, Net: "udp"}
+	udpListener := &dns.Server{Addr: fmt.Sprintf("%s:%s", config.Host, config.Port), Net: "udp"}
 	return udpListener.ListenAndServe()
 }

@@ -12,8 +12,9 @@ package caches
 
 import (
 	"fmt"
-	"github.com/nanopack/shaman/config"
 	"net/url"
+
+	"github.com/nanopack/shaman/config"
 )
 
 type Cacher interface {

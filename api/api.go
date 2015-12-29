@@ -11,12 +11,14 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/gorilla/pat"
 	"github.com/miekg/dns"
 	nanoauth "github.com/nanobox-io/golang-nanoauth"
+
 	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/config"
-	"net/http"
 )
 
 var auth nanoauth.Auth
@@ -34,7 +36,8 @@ func StartApi() error {
 	}
 	auth.Certificate = cert
 	auth.Header = "X-NANOBOX-TOKEN"
-	return auth.ListenAndServeTLS(config.ApiAddress, config.ApiToken, routes())
+
+	return auth.ListenAndServeTLS(fmt.Sprintf("%s:%s", config.ApiHost, config.ApiPort), config.ApiToken, routes())
 }
 
 func routes() *pat.Router {

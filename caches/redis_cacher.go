@@ -8,9 +8,10 @@ package caches
 //  - test
 
 import (
-	"github.com/garyburd/redigo/redis"
 	"net/url"
 	"time"
+
+	"github.com/garyburd/redigo/redis"
 )
 
 type redisCacher struct {
