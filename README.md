@@ -12,41 +12,43 @@ Working
 ## Todo
 - Logging
 - Tests
-    - api
-    - cli
 - Read configuration from file
 
 ## Server
 ```
-Usage of ./shaman:
-  -address string
-    	Listen address for DNS requests (default "127.0.0.1:8053")
-  -api-address string
-    	Listen address for the API (default "127.0.0.1:8443")
-  -api-crt string
-    	Path to SSL crt for API access
-  -api-key string
-    	Path to SSL key for API access
-  -api-key-password string
-    	Password for SSL key
-  -api-token string
-    	Token for API Access
-  -domain string
-    	Parent domain for requests (default "example.com")
-  -l1-connect string
-    	Connection string for the l1 cache (default "map://127.0.0.1/")
-  -l1-expires int
-    	TTL for the L1 Cache (0 = never expire) (default 120)
-  -l2-connect string
-    	Connection string for the l2 cache (default "map://127.0.0.1/")
-  -l2-expires int
-    	TTL for the L2 Cache (0 = never expire)
-  -log-file string
-    	Log file (blank = log to console)
-  -log-level string
-    	Log level to use (default "INFO")
-  -ttl int
-    	Default TTL for DNS records (default 60)
+Usage:
+   [flags]
+   [command]
+
+Available Commands:
+  add         Add entry into shaman database
+  remove      Remove entry from shaman database
+  show        Show entry in shaman database
+  update      Update entry in shaman database
+  list        List entries in shaman database
+
+Flags:
+  -c, --api-crt="": Path to SSL crt for API access
+  -H, --api-host="127.0.0.1": Listen address for the API
+  -k, --api-key="": Path to SSL key for API access
+  -p, --api-key-password="": Password for SSL key
+  -P, --api-port="8443": Listen address for the API
+  -t, --api-token="": Token for API Access
+  -d, --domain=".": Parent domain for requests
+  -h, --help[=false]: help for 
+  -O, --host="127.0.0.1": Listen address for DNS requests
+  -i, --insecure[=false]: Disable tls key checking
+  -1, --l1-connect="map://127.0.0.1/": Connection string for the l1 cache
+  -e, --l1-expires=120: TTL for the L1 Cache (0 = never expire)
+  -2, --l2-connect="map://127.0.0.1/": Connection string for the l2 cache
+  -E, --l2-expires=0: TTL for the L2 Cache (0 = never expire)
+  -l, --log-file="": Log file (blank = log to console)
+  -L, --log-level="INFO": Log level to use
+  -o, --port="8053": Listen port for DNS requests
+  -s, --server[=false]: Run in server mode
+  -T, --ttl=60: Default TTL for DNS records
+
+Use " [command] --help" for more information about a command.
 ```
 ### L1 and L2 connection strings
 
@@ -61,6 +63,23 @@ The connection string looks like `redis://user:password@host:port/`. The user is
 
 #### Scribble Cacher
 The connection string looks like `scribble://localhost/path/to/data/store`. Scribble only cares about the path part of the URI to determine where it should place the files.
+
+### Commands
+
+#### add
+`add [Record Type] [Domain] [Value]`
+
+#### remove
+`remove [Record Type] [Domain]`
+
+#### show
+`show [Record Type] [Domain]`
+
+#### update
+`update [Record Type] [Domain] [Value]`
+
+#### list 
+`list`
 
 ## API
 The API is a web based API. The API uses TLS and a token for security and authentication.
@@ -84,43 +103,6 @@ A `value` must be put. Currently it has to be past as a query string rather than
 
 #### List
 GET to `/records`
-
-## CLI
-```
-Usage:
-   [command]
-
-Available Commands:
-  add         Add entry into shaman database
-  remove      Remove entry from shaman database
-  show        Show entry in shaman database
-  update      Update entry in shaman database
-  list        List entries in shaman database
-
-Flags:
-  -A, --auth="": Shaman auth token
-  -h, --help[=false]: help for 
-  -H, --host="127.0.0.1": Shaman hostname/IP
-  -i, --insecure[=false]: Disable tls key checking
-  -p, --port=8443: Shaman admin port
-
-Use " [command] --help" for more information about a command.
-```
-
-#### add
-`add [Record Type] [Domain] [Value]`
-
-#### remove
-`remove [Record Type] [Domain]`
-
-#### show
-`show [Record Type] [Domain]`
-
-#### update
-`update [Record Type] [Domain] [Value]`
-
-#### list 
-`list`
 
 ### Notes
 
