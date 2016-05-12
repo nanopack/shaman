@@ -46,7 +46,8 @@ func Initialize() error {
 		err = storage.initialize()
 		if err != nil {
 			storage = nil
-			err = fmt.Errorf("Failed to initialize cache, turning off - %v", err)
+			config.Log.Info("Failed to initialize cache, turning off - %v", err)
+			err = nil
 		}
 	}
 

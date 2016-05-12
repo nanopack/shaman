@@ -39,7 +39,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/jcelliott/lumber"
 	"github.com/spf13/cobra"
@@ -54,12 +53,14 @@ import (
 var (
 	// shaman provides the shaman cli/server functionality
 	shamanTool = &cobra.Command{
-		Use:              "shaman",
-		Short:            "shaman - api driven dns server",
-		Long:             ``,
-		PersistentPreRun: readConfig,
-		PreRun:           preFlight,
-		Run:              startShaman,
+		Use:               "shaman",
+		Short:             "shaman - api driven dns server",
+		Long:              ``,
+		PersistentPreRunE: readConfig,
+		PreRunE:           preFlight,
+		RunE:              startShaman,
+		SilenceErrors:     true,
+		SilenceUsage:      true,
 	}
 )
 
@@ -79,33 +80,35 @@ func main() {
 	shamanTool.Execute()
 }
 
-func readConfig(ccmd *cobra.Command, args []string) {
+func readConfig(ccmd *cobra.Command, args []string) error {
 	if err := config.LoadConfigFile(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		fmt.Printf("Error: %v\n", err)
+		return err
 	}
+	return nil
 }
 
-func preFlight(ccmd *cobra.Command, args []string) {
+func preFlight(ccmd *cobra.Command, args []string) error {
 	if config.Version {
 		fmt.Printf("shaman %s\n", VERSION)
-		os.Exit(0)
+		return fmt.Errorf("")
 	}
 
 	if !config.Server {
 		ccmd.HelpFunc()(ccmd, args)
-		os.Exit(0)
+		return fmt.Errorf("")
 	}
+	return nil
 }
 
-func startShaman(ccmd *cobra.Command, args []string) {
+func startShaman(ccmd *cobra.Command, args []string) error {
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt(config.LogLevel))
 
 	// initialize cache
 	err := cache.Initialize()
 	if err != nil {
 		config.Log.Fatal(err.Error())
-		os.Exit(1)
+		return err
 	}
 
 	// make channel for errors
@@ -121,6 +124,6 @@ func startShaman(ccmd *cobra.Command, args []string) {
 	// break if any of them return an error (blocks exit)
 	if err := <-errors; err != nil {
 		config.Log.Fatal(err.Error())
-		os.Exit(1)
 	}
+	return err
 }
