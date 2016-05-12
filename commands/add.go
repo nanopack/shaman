@@ -2,69 +2,56 @@ package commands
 
 import (
 	"bytes"
-	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"net/url"
-	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/nanopack/shaman/config"
 )
 
-var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add entry into shaman database",
-	Long:  ``,
+var (
+	// AddDomain adds a domain to shaman
+	AddDomain = &cobra.Command{
+		Use:   "add",
+		Short: "Add a domain to shaman",
+		Long:  ``,
 
-	Run: add,
-}
-
-type addBody struct {
-	value string
-}
-
-func add(ccmd *cobra.Command, args []string) {
-	if len(args) != 3 {
-		fmt.Fprintln(os.Stderr, "Missing arguments: Needs record type, domain, and value")
-		os.Exit(1)
+		Run: addRecord,
 	}
-	var client *http.Client
-	if config.Insecure {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+)
+
+func addRecord(ccmd *cobra.Command, args []string) {
+	if jsonString != "" {
+		err := json.Unmarshal([]byte(jsonString), &resource)
+		if err != nil {
+			fail("Bad JSON syntax")
 		}
-		client = &http.Client{Transport: tr}
 	} else {
-		client = http.DefaultClient
+		if record.Address == "" {
+			// warn if record.Address is empty - doesn't apply to jsonString
+			fail("Missing address for record. Try adding `-A`")
+		}
+		resource.Records = append(resource.Records, record)
 	}
-	rtype := args[0]
-	domain := args[1]
-	value := args[2]
-	fmt.Println("rtype:", rtype, "domain:", domain, "value:", value)
-	data := url.Values{}
-	data.Set("value", value)
 
-	uri := fmt.Sprintf("https://%s:%s/records/%s/%s?%s", config.ApiHost, config.ApiPort, rtype, domain, data.Encode())
-	fmt.Println(uri)
-	req, err := http.NewRequest("POST", uri, bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+	if resource.Domain == "" {
+		fail("Domain must be specified. Try adding `-d`.")
 	}
-	req.Header.Add("X-NANOBOX-TOKEN", config.ApiToken)
-	res, err := client.Do(req)
+
+	jsonBytes, err := json.Marshal(resource)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		fail("Bad values for resource")
+	}
+
+	res, err := rest("POST", "/records", bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		fail("Could not contact shaman - %v", err)
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		fail("Could not read shaman's response - %v", err)
 	}
-	fmt.Println(string(b))
+
+	fmt.Print(string(b))
 }

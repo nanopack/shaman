@@ -1,13 +1,5 @@
 language: go
+go: 1.6
 
-go:
-  - 1.5
-
-go_import_path: github.com/nanopack/shaman
-
-services:
-  - postgres
-  - redis-server
-
-before_script:
-  - psql -c 'create database travis_ci_test;' -U postgres
+install: go get -t -v .
+script: go test -v ./...
