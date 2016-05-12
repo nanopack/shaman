@@ -35,7 +35,7 @@ func (self Resource) StringSlice() []string {
 // SanitizeDomain ensures the domain ends with a `.`
 func SanitizeDomain(domain *string) {
 	t := []byte(*domain)
-	if t[len(t)-1] != '.' {
+	if len(t) > 0 && t[len(t)-1] != '.' {
 		*domain = string(append(t, '.'))
 	}
 }
@@ -43,7 +43,7 @@ func SanitizeDomain(domain *string) {
 // UnsanitizeDomain ensures the domain ends with a `.`
 func UnsanitizeDomain(domain *string) {
 	t := []byte(*domain)
-	if t[len(t)-1] == '.' {
+	if len(t) > 0 && t[len(t)-1] == '.' {
 		*domain = string(t[:len(t)-1])
 	}
 }

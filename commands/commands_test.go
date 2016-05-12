@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 
 	// start api
 	go api.Start()
-	<-time.After(1 * time.Second)
+	<-time.After(time.Second)
 	rtn := m.Run()
 
 	os.Exit(rtn)

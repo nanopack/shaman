@@ -17,9 +17,9 @@ func TestScribbleInitialize(t *testing.T) {
 	config.L2Connect = "scribble:///roots/file" // unable to init? (test no sudo)
 	err3 := cache.Initialize()
 	config.L2Connect = "scribble:///" // defaulting to "/var/db"
-	err4 := cache.Initialize()
-	if err != nil || err2 == nil || err3 == nil || err4 != nil {
-		t.Errorf("Failed to initalize scribble cacher - %v%v%v%v", err, err2, err3, err4)
+	cache.Initialize()
+	if err != nil || err2 == nil || err3 == nil {
+		t.Errorf("Failed to initalize scribble cacher - %v%v%v", err, err2, err3)
 	}
 }
 
