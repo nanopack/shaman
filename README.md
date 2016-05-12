@@ -6,6 +6,7 @@
 
 Small, clusterable, lightweight, api-driven dns server.
 
+
 ## Quickstart:
 ```sh
 # Start shaman with defaults (requires admin privileges (port 53))
@@ -15,11 +16,14 @@ shaman -s
 shaman add -d nanopack.io -A 127.0.0.1
 
 # perform dns lookup
+# OR `nslookup -port=53 nanopack.io 127.0.0.1`
 dig @localhost nanopack.io +short
 # 127.0.0.1
 
+
 # Congratulations!
 ```
+
 
 ## Usage:
 
@@ -88,6 +92,20 @@ An optional config file can also be passed on startup:
 }
 ```
 
+#### L2 connection strings
+
+##### Scribble Cacher
+The connection string looks like `scribble://localhost/path/to/data/store`.
+
+<!--
+#### Redis Cacher
+The connection string looks like `redis://[user:password@]host:port/`.
+
+#### Postgresql Cacher
+The connection string looks like `postgres://[user@]host/database`.
+ -->
+
+
 ## API:
 
 | Route | Description | Payload | Output |
@@ -99,7 +117,27 @@ An optional config file can also be passed on startup:
 | **GET** /records/{domain} | Returns the records for that domain | nil | json domain object |
 | **DELETE** /records/{domain} | Delete a domain | nil | success message |
 
+**note:** The API requires a token to be passed for authentication by default and is configurable at server start (`--token`). The token is passed in as a custom header: `X-AUTH-TOKEN`.  
+
 For examples, see [the api's readme](api/README.md)  
+
+
+## Overview
+
+```sh
++------------+     +----------+     +-----------------+
+|            +----->          +----->                 |
+| API Server |     |          |     |   Short-Term    |
+|            <-----+ Caching  <-----+   (in-memory)   |
++------------+     | And      |     +-----------------+
+                   | Database |
++------------+     | Manager  |     +-----------------+
+|            +----->          +----->                 |
+| DNS Server |     |          |     | Long-Term (L2)  |
+|            <-----+          <-----+                 |
++------------+     +----------+     +-----------------+
+```
+
 
 ## Data types:
 ### Domain (Resource):
@@ -159,14 +197,18 @@ json:
 Fields:
  - **msg**: Success message
 
+
 ## Todo
-- tests for server/dns
-- start server insecure
 - atomic local cache updates
 - export in hosts file format
+
 
 ## Changelog
 - v0.0.2 (May 11, 2016)
   - Refactor to allow multiple records per domain and more fully utilize dns library
+- v0.0.3 (May 12, 2016)
+  - Tests for DNS server
+  - Start Server Insecure
+
 
 [![oss logo](http://nano-assets.gopagoda.io/open-src/nanobox-open-src.png)](http://nanobox.io/open-source)

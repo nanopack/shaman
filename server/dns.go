@@ -14,6 +14,7 @@ import (
 func Start() error {
 	dns.HandleFunc(".", handlerFunc)
 	udpListener := &dns.Server{Addr: config.DnsListen, Net: "udp"}
+	config.Log.Info("DNS listening at udp://%v", config.DnsListen)
 	return fmt.Errorf("DNS listener stopped - %v", udpListener.ListenAndServe())
 }
 

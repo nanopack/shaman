@@ -32,6 +32,12 @@ var (
 
 // Start starts shaman's http api
 func Start() error {
+	// handle config.Insecure
+	if config.Insecure {
+		config.Log.Info("Shaman listening at http://%s...", config.ApiListen)
+		return fmt.Errorf("API stopped - %v", http.ListenAndServe(config.ApiListen, routes()))
+	}
+
 	var cert *tls.Certificate
 	var err error
 	if config.ApiCrt == "" {
@@ -45,9 +51,7 @@ func Start() error {
 	auth.Certificate = cert
 	auth.Header = "X-AUTH-TOKEN"
 
-	config.Log.Info("Shaman listening on https://%v", config.ApiListen)
-
-	// todo: handle config.Insecure
+	config.Log.Info("Shaman listening at https://%v", config.ApiListen)
 
 	return fmt.Errorf("API stopped - %v", auth.ListenAndServeTLS(config.ApiListen, config.ApiToken, routes()))
 }
