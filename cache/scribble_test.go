@@ -18,7 +18,7 @@ func TestScribbleInitialize(t *testing.T) {
 	err3 := cache.Initialize()
 	config.L2Connect = "scribble:///" // defaulting to "/var/db"
 	cache.Initialize()
-	if err != nil || err2 == nil || err3 == nil {
+	if err != nil || err2 == nil || err3 != nil {
 		t.Errorf("Failed to initalize scribble cacher - %v%v%v", err, err2, err3)
 	}
 }

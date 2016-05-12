@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"bytes"
 	"os"
 	"strings"
 	"testing"
@@ -10,22 +10,17 @@ import (
 	"github.com/nanopack/shaman/config"
 )
 
-var discard io.Writer = devNull(0)
-
-// dummy writer type
-type devNull int
-
-// dummy write method
-func (devNull) Write(p []byte) (int, error) {
-	return len(p), nil
-}
-
 func TestMain(m *testing.M) {
+	// manually configure
 	config.LogLevel = "fatal"
-	args := strings.Split("-O 127.0.0.1:8053 -2 none:// -s", " ")
-	shamanTool.SetArgs(args)
+	discard := &bytes.Buffer{}
 	shamanTool.SetOutput(discard)
 
+	// set args for shaman
+	args := strings.Split("-O 127.0.0.1:8053 -2 none:// -s", " ")
+	shamanTool.SetArgs(args)
+
+	// run shaman server
 	go main()
 	<-time.After(time.Second)
 
