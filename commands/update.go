@@ -2,69 +2,54 @@ package commands
 
 import (
 	"bytes"
-	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"net/url"
-	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/nanopack/shaman/config"
 )
 
-var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update entry in shaman database",
-	Long:  ``,
+var (
+	// UpdateDomain updates records for a domain
+	UpdateDomain = &cobra.Command{
+		Use:   "update",
+		Short: "Update records for a domain",
+		Long:  ``,
 
-	Run: update,
-}
-
-type updateBody struct {
-	value string
-}
-
-func update(ccmd *cobra.Command, args []string) {
-	if len(args) != 3 {
-		fmt.Fprintln(os.Stderr, "Missing arguments: Needs record type, domain, and value")
-		os.Exit(1)
+		Run: updateRecord,
 	}
-	var client *http.Client
-	if config.Insecure {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+)
+
+func updateRecord(ccmd *cobra.Command, args []string) {
+	if jsonString != "" {
+		err := json.Unmarshal([]byte(jsonString), &resource)
+		if err != nil {
+			fail("Bad JSON syntax")
 		}
-		client = &http.Client{Transport: tr}
-	} else {
-		client = http.DefaultClient
-	}
-	rtype := args[0]
-	domain := args[1]
-	value := args[2]
-	fmt.Println("rtype:", rtype, "domain:", domain, "value:", value)
-	data := url.Values{}
-	data.Set("value", value)
-
-	uri := fmt.Sprintf("https://%s:%s/records/%s/%s?%s", config.ApiHost, config.ApiPort, rtype, domain, data.Encode())
-	fmt.Println(uri)
-	req, err := http.NewRequest("PUT", uri, bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
-	}
-	req.Header.Add("X-NANOBOX-TOKEN", config.ApiToken)
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
 	}
 
+	if resource.Domain == "" {
+		fail("Domain must be specified. Try adding `-d`.")
+	}
+
+	resource.Records = append(resource.Records, record)
+
+	// validate valid values
+	jsonBytes, err := json.Marshal(resource)
+	if err != nil {
+		fail("Bad values for resource")
+	}
+
+	res, err := rest("PUT", fmt.Sprintf("/records/%v", resource.Domain), bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		fail("Could not contact shaman - %v", err)
+	}
+
+	// parse response
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		fail("Could not read shaman's response - %v", err)
 	}
-	fmt.Println(string(b))
+
+	fmt.Print(string(b))
 }

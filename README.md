@@ -1,135 +1,133 @@
-[![shaman logo](http://nano-assets.gopagoda.io/readme-headers/shaman.png)](http://nanobox.io/open-source#shaman)
+[![shaman logo](http://nano-assets.gopagoda.io/readme-headers/shaman.png)](http://nanobox.io/open-source#shaman)  
 [![Build Status](https://travis-ci.org/nanopack/shaman.svg)](https://travis-ci.org/nanopack/shaman)
+[![GoDoc](https://godoc.org/github.com/nanopack/shaman?status.svg)](https://godoc.org/github.com/nanopack/shaman)
 
-# shaman
+# Shaman
 
-Small, lightweight, api-driven dns server.
+Small, clusterable, lightweight, api-driven dns server.
 
-## Status
 
-Working
+## Quickstart:
+```sh
+# Start shaman with defaults (requires admin privileges (port 53))
+shaman -s
 
-## Todo
-- Logging
-- Tests
-- Read configuration from file
+# register a new domain
+shaman add -d nanopack.io -A 127.0.0.1
 
-## Server
+# perform dns lookup
+# OR `nslookup -port=53 nanopack.io 127.0.0.1`
+dig @localhost nanopack.io +short
+# 127.0.0.1
+
+# Congratulations!
 ```
+
+
+## Usage:
+
+### As a CLI
+Simply run `shaman <COMMAND>`
+
+`shaman` or `shaman -h` will show usage and a list of commands:
+
+```
+shaman - api driven dns server
+
 Usage:
-   [flags]
-   [command]
+  shaman [flags]
+  shaman [command]
 
 Available Commands:
-  add         Add entry into shaman database
-  remove      Remove entry from shaman database
-  show        Show entry in shaman database
-  update      Update entry in shaman database
-  list        List entries in shaman database
+  add         Add a domain to shaman
+  delete      Remove a domain from shaman
+  list        List all domains in shaman
+  get         Get records for a domain
+  update      Update records for a domain
+  reset       Reset all domains in shaman
 
 Flags:
-  -c, --api-crt="": Path to SSL crt for API access
-  -H, --api-host="127.0.0.1": Listen address for the API
-  -k, --api-key="": Path to SSL key for API access
-  -p, --api-key-password="": Password for SSL key
-  -P, --api-port="8443": Listen address for the API
-  -t, --api-token="": Token for API Access
-  -d, --domain=".": Parent domain for requests
-  -h, --help[=false]: help for 
-  -O, --host="127.0.0.1": Listen address for DNS requests
-  -i, --insecure[=false]: Disable tls key checking
-  -1, --l1-connect="map://127.0.0.1/": Connection string for the l1 cache
-  -e, --l1-expires=120: TTL for the L1 Cache (0 = never expire)
-  -2, --l2-connect="map://127.0.0.1/": Connection string for the l2 cache
-  -E, --l2-expires=0: TTL for the L2 Cache (0 = never expire)
-  -l, --log-file="": Log file (blank = log to console)
-  -L, --log-level="INFO": Log level to use
-  -o, --port="8053": Listen port for DNS requests
-  -s, --server[=false]: Run in server mode
-  -T, --ttl=60: Default TTL for DNS records
+  -C, --api-crt string            Path to SSL crt for API access
+  -k, --api-key string            Path to SSL key for API access
+  -p, --api-key-password string   Password for SSL key
+  -H, --api-listen string         Listen address for the API (ip:port) (default "127.0.0.1:1632")
+  -c, --config-file string        Configuration file to load
+  -O, --dns-listen string         Listen address for DNS requests (ip:port) (default "127.0.0.1:53")
+  -d, --domain string             Parent domain for requests (default ".")
+  -i, --insecure                  Disable tls key checking (client) and listen on http (api)
+  -2, --l2-connect string         Connection string for the l2 cache (default "scribble:///var/db/shaman")
+  -l, --log-level string          Log level to output [fatal|error|info|debug|trace] (default "INFO")
+  -s, --server                    Run in server mode
+  -t, --token string              Token for API Access (default "secret")
+  -T, --ttl int                   Default TTL for DNS records (default 60)
+  -v, --version                   Print version info and exit
 
-Use " [command] --help" for more information about a command.
+Use "shaman [command] --help" for more information about a command.
 ```
-### L1 and L2 connection strings
 
-#### In-Memory Map Cacher
-This is the default cacher. If the connection string doesn't match any of the other's, it will use this one.
+For usage examples, see [api](api/README.md) and/or [cli](commands/README.md) readme  
+
+### As a Server
+To start shaman as a server run:  
+`shaman --server`  
+An optional config file can also be passed on startup:  
+`shaman -c config.json`  
+
+>config.json
+>```json
+{
+  "api-crt": "",
+  "api-key": "",
+  "api-key-password": "",
+  "api-listen": "127.0.0.1:1632",
+  "token": "secret",
+  "insecure": false,
+  "l2-connect": "scribble:///var/db/shaman",
+  "ttl": 60,
+  "domain": ".",
+  "dns-listen": "127.0.0.1:53",
+  "log-level": "info",
+  "server": true
+}
+```
+
+#### L2 connection strings
+
+##### Scribble Cacher
+The connection string looks like `scribble://localhost/path/to/data/store`.
+
+<!--
+#### Redis Cacher
+The connection string looks like `redis://[user:password@]host:port/`.
 
 #### Postgresql Cacher
-The connection string looks like `postgres://user@host/database` and more [docs here](https://godoc.org/github.com/lib/pq). This string gets passed into the sql driver without modification.
+The connection string looks like `postgres://[user@]host/database`.
+ -->
 
-#### Redis Cacher
-The connection string looks like `redis://user:password@host:port/`. The user is not really used, but only there if there is a password on the redis-server.
 
-#### Scribble Cacher
-The connection string looks like `scribble://localhost/path/to/data/store`. Scribble only cares about the path part of the URI to determine where it should place the files.
+## API:
 
-### Commands
+| Route | Description | Payload | Output |
+| --- | --- | --- | --- |
+| **POST** /records | Adds the domain and full record | json domain object | json domain object |
+| **PUT** /records | Update all domains and records (replaces all) | json array of domain objects | json array of domain objects |
+| **GET** /records | Returns a list of domains we have records for | nil | string array of domains |
+| **PUT** /records/{domain} | Update domain's records (replaces all) | json domain object | json domain object |
+| **GET** /records/{domain} | Returns the records for that domain | nil | json domain object |
+| **DELETE** /records/{domain} | Delete a domain | nil | success message |
 
-#### add
-`add [Record Type] [Domain] [Value]`
+**note:** The API requires a token to be passed for authentication by default and is configurable at server start (`--token`). The token is passed in as a custom header: `X-AUTH-TOKEN`.  
 
-#### remove
-`remove [Record Type] [Domain]`
+For examples, see [the api's readme](api/README.md)  
 
-#### show
-`show [Record Type] [Domain]`
 
-#### update
-`update [Record Type] [Domain] [Value]`
+## Overview
 
-#### list 
-`list`
-
-## API
-The API is a web based API. The API uses TLS and a token for security and authentication.
-
-### API token
-The API requires a token to be passed for authentication. This token is set when the server is started. The token is passed in the header as `X-NANOBOX-TOKEN`.
-
-#### Add
-POST to `/records/[record type]/[domain]`
-A `value` must be posted. Currently it has to be past as a query string rather than part of the post body like `/records/[record type]/[domain]?value=[value]`. This is an issue that should be fixed.
-
-#### Remove
-DELETE to `/records/[record type]/[domain]`
-
-#### Show
-GET to `/records/[record type]/[domain]`
-
-#### Update
-PUT to `/records/[record type]/[domain]`
-A `value` must be put. Currently it has to be past as a query string rather than part of the put body like `/records/[record type]/[domain]?value=[value]`. This is an issue that should be fixed.
-
-#### List
-GET to `/records`
-
-### Notes
-
-#### Using nslookup to test
-The port can be set with `set port=8053` and the server with `server 127.0.0.1`
-```
-$ nslookup
-> set port=8053
-> server 127.0.0.1
-Default server: 127.0.0.1
-Address: 127.0.0.1#8053
-> test.com
-Server:		127.0.0.1
-Address:	127.0.0.1#8053
-
-Non-authoritative answer:
-*** Can't find test.com: No answer
-> exit
-```
-
-#### Overview
-
-```
+```sh
 +------------+     +----------+     +-----------------+
 |            +----->          +----->                 |
-| API Server |     |          |     | Short-Term (L1) |
-|            <-----+ Caching  <-----+                 |
+| API Server |     |          |     |   Short-Term    |
+|            <-----+ Caching  <-----+   (in-memory)   |
 +------------+     | And      |     +-----------------+
                    | Database |
 +------------+     | Manager  |     +-----------------+
@@ -139,4 +137,77 @@ Non-authoritative answer:
 +------------+     +----------+     +-----------------+
 ```
 
-[![shaman logo](http://nano-assets.gopagoda.io/open-src/nanobox-open-src.png)](http://nanobox.io/open-source)
+
+## Data types:
+### Domain (Resource):
+json:
+```json
+{
+  "domain": "nanopack.io.",
+  "records": [
+    {
+      "ttl": 60,
+      "class": "IN",
+      "type": "A",
+      "address": "127.0.0.1"
+    },
+    {
+      "ttl": 60,
+      "class": "IN",
+      "type": "A",
+      "address": "127.0.0.2"
+    }
+  ]
+}
+```
+
+Fields:
+- **domain**: Domain name to resolve
+- **records**: Array of address records
+  - **ttl**: Seconds a client should cache for
+  - **class**: Record class
+  - **type**: Record type
+    - A - Address record
+    - CNAME - Canonical name record
+    - MX - Mail exchange record
+    - [Many more](https://en.wikipedia.org/wiki/List_of_DNS_record_types) - may or may not work as is
+  - **address**: Address domain resolves to
+    - <sup>note: Special rules apply in some cases. E.g. MX records require a number "10 mail.google.com"</sup>
+
+### Error:
+json:
+```json
+{
+  "err": "exit status 2: unexpected argument"
+}
+```
+
+Fields:
+ - **err**: Error message
+
+### Message:
+json:
+```json
+{
+  "msg": "Success"
+}
+```
+
+Fields:
+ - **msg**: Success message
+
+
+## Todo
+- atomic local cache updates
+- export in hosts file format
+
+
+## Changelog
+- v0.0.2 (May 11, 2016)
+  - Refactor to allow multiple records per domain and more fully utilize dns library
+- v0.0.3 (May 12, 2016)
+  - Tests for DNS server
+  - Start Server Insecure
+
+
+[![oss logo](http://nano-assets.gopagoda.io/open-src/nanobox-open-src.png)](http://nanobox.io/open-source)

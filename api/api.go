@@ -1,29 +1,43 @@
+// Package "api" provides a restful interface to manage entries in the DNS database.
 package api
-
-// This is a restful interface to manage entries in the DNS database
-
-// TODO:
-//  - parse data to build record to add/update
-//  - add logging
-//  - test
 
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/pat"
-	"github.com/miekg/dns"
 	nanoauth "github.com/nanobox-io/golang-nanoauth"
 
-	"github.com/nanopack/shaman/caches"
 	"github.com/nanopack/shaman/config"
 )
 
-var auth nanoauth.Auth
+type (
+	apiError struct {
+		ErrorString string `json:"err"`
+	}
+	apiMsg struct {
+		MsgString string `json:"msg"`
+	}
+)
 
-func StartApi() error {
+var (
+	auth         nanoauth.Auth
+	badJson      = errors.New("Bad JSON syntax received in body")
+	bodyReadFail = errors.New("Body Read Failed")
+)
+
+// Start starts shaman's http api
+func Start() error {
+	// handle config.Insecure
+	if config.Insecure {
+		config.Log.Info("Shaman listening at http://%s...", config.ApiListen)
+		return fmt.Errorf("API stopped - %v", http.ListenAndServe(config.ApiListen, routes()))
+	}
+
 	var cert *tls.Certificate
 	var err error
 	if config.ApiCrt == "" {
@@ -35,139 +49,67 @@ func StartApi() error {
 		return err
 	}
 	auth.Certificate = cert
-	auth.Header = "X-NANOBOX-TOKEN"
+	auth.Header = "X-AUTH-TOKEN"
 
-	return auth.ListenAndServeTLS(fmt.Sprintf("%s:%s", config.ApiHost, config.ApiPort), config.ApiToken, routes())
+	config.Log.Info("Shaman listening at https://%v", config.ApiListen)
+
+	return fmt.Errorf("API stopped - %v", auth.ListenAndServeTLS(config.ApiListen, config.ApiToken, routes()))
 }
 
 func routes() *pat.Router {
 	router := pat.New()
-	router.Get("/records/{rtype}/{domain}", handleRequest(getRecord))
-	router.Post("/records/{rtype}/{domain}", handleRequest(addRecord))
-	router.Put("/records/{rtype}/{domain}", handleRequest(updateRecord))
-	router.Delete("/records/{rtype}/{domain}", handleRequest(deleteRecord))
-	router.Get("/records", handleRequest(listRecords))
+
+	router.Delete("/records/{domain}", deleteRecord) // delete resource
+	router.Put("/records/{domain}", updateRecord)    // reset resource's records
+	router.Get("/records/{domain}", getRecord)       // return resource's records
+
+	router.Post("/records", createRecord) // add a resource
+	router.Get("/records", listRecords)   // return all domains
+	router.Put("/records", updateAnswers) // reset all resources
+
 	return router
 }
 
-func handleRequest(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(rw http.ResponseWriter, req *http.Request) {
-		fn(rw, req)
-	}
-}
-
-func writeBody(v interface{}, rw http.ResponseWriter, status int) error {
+func writeBody(rw http.ResponseWriter, req *http.Request, v interface{}, status int) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
 	}
 
+	// print the error only if there is one
+	var msg map[string]string
+	json.Unmarshal(b, &msg)
+
+	var errMsg string
+	if msg["error"] != "" {
+		errMsg = msg["error"]
+	}
+
+	config.Log.Debug("%s %d %s %s %s", req.RemoteAddr, status, req.Method, req.RequestURI, errMsg)
+
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(status)
-	rw.Write(b)
+	rw.Write(append(b, byte('\n')))
 
 	return nil
 }
 
-func getRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := dns.StringToType[req.URL.Query().Get(":rtype")]
-	domain := req.URL.Query().Get(":domain")
-	dns.IsDomainName(domain)
-	key := caches.Key(domain, rtype)
-	findReturn := make(chan caches.FindReturn)
-	findOp := caches.FindOp{Key: key, Resp: findReturn}
-	caches.FindOps <- findOp
-	findRet := <-findReturn
-	err := findRet.Err
-	record := findRet.Value
-	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
-	}
-	if record == "" {
-		writeBody(nil, rw, http.StatusNotFound)
-		return
-	}
-	rr, err := dns.NewRR(record)
-	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
-	}
-	err = writeBody(rr, rw, http.StatusOK)
-	if err != nil {
-		// log error
-	}
-}
+// parseBody parses the json body into v
+func parseBody(req *http.Request, v interface{}) error {
 
-func addRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := req.URL.Query().Get(":rtype")
-	domain := req.URL.Query().Get(":domain")
-	value := req.FormValue("value")
-	ttl := config.TTL
-	key := caches.Key(domain, dns.StringToType[rtype])
-	rrString := fmt.Sprintf("%s %d IN %s %s", domain, ttl, rtype, value)
-	rr, err := dns.NewRR(rrString)
+	// read the body
+	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
+		config.Log.Error(err.Error())
+		return bodyReadFail
 	}
-	resp := make(chan error)
-	addOp := caches.AddOp{Key: key, Value: rr.String(), Resp: resp}
-	caches.AddOps <- addOp
-	err = <-resp
-	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
-	}
-	writeBody(rr, rw, http.StatusOK)
-}
+	defer req.Body.Close()
 
-func updateRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := req.URL.Query().Get(":rtype")
-	domain := req.URL.Query().Get(":domain")
-	key := caches.Key(domain, dns.StringToType[rtype])
-	ttl := config.TTL
-	value := req.FormValue("value")
-	rrString := fmt.Sprintf("%s %d IN %s %s", domain, ttl, rtype, value)
-	rr, err := dns.NewRR(rrString)
+	// parse body and store in v
+	err = json.Unmarshal(b, v)
 	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
+		return badJson
 	}
-	resp := make(chan error)
-	updateOp := caches.UpdateOp{Key: key, Value: rr.String(), Resp: resp}
-	caches.UpdateOps <- updateOp
-	err = <-resp
-	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
-	}
-	writeBody(rr, rw, http.StatusOK)
-}
 
-func deleteRecord(rw http.ResponseWriter, req *http.Request) {
-	rtype := req.URL.Query().Get(":rtype")
-	domain := req.URL.Query().Get(":domain")
-	key := caches.Key(domain, dns.StringToType[rtype])
-	resp := make(chan error)
-	removeOp := caches.RemoveOp{Key: key, Resp: resp}
-	caches.RemoveOps <- removeOp
-	err := <-resp
-	if err != nil {
-		writeBody(err, rw, http.StatusInternalServerError)
-		return
-	}
-	writeBody(nil, rw, http.StatusOK)
-}
-
-func listRecords(rw http.ResponseWriter, req *http.Request) {
-	resp := make(chan caches.ListReturn)
-	listOp := caches.ListOp{Resp: resp}
-	caches.ListOps <- listOp
-	listReturn := <-resp
-	if listReturn.Err != nil {
-		writeBody(listReturn.Err, rw, http.StatusInternalServerError)
-		return
-	}
-	writeBody(listReturn.Values, rw, http.StatusOK)
+	return nil
 }

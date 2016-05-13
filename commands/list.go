@@ -1,54 +1,38 @@
 package commands
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/nanopack/shaman/config"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List entries in shaman database",
-	Long:  ``,
+var (
+	// ListDomains lists all domains in shaman
+	ListDomains = &cobra.Command{
+		Use:   "list",
+		Short: "List all domains in shaman",
+		Long:  ``,
 
-	Run: list,
-}
+		Run: listRecords,
+	}
+)
 
-func list(ccmd *cobra.Command, args []string) {
-	var client *http.Client
-	if config.Insecure {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client = &http.Client{Transport: tr}
-	} else {
-		client = http.DefaultClient
+func listRecords(ccmd *cobra.Command, args []string) {
+	var query string
+	if full {
+		query = "?full=true"
 	}
 
-	uri := fmt.Sprintf("https://%s:%s/records", config.ApiHost, config.ApiPort)
-	fmt.Println(uri)
-	req, err := http.NewRequest("GET", uri, nil)
+	res, err := rest("GET", fmt.Sprintf("/records%v", query), nil)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
-	}
-	req.Header.Add("X-NANOBOX-TOKEN", config.ApiToken)
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		fail("Could not contact shaman - %v", err)
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+		fail("Could not read shaman's response - %v", err)
 	}
-	fmt.Println(string(b))
+
+	fmt.Print(string(b))
 }
