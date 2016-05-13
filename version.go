@@ -1,3 +1,9 @@
 package main
 
-const VERSION = "0.0.3"
+// shaman version information (populated by go linker)
+// -ldflags="-X main.version=${tag} -X main.branch=${branch} -X main.commit=${commit}"
+var (
+	version string
+	branch  string
+	commit  string
+)

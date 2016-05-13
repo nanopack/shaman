@@ -1,12 +1,32 @@
 #!/usr/bin/env bash
 set -e
 
+# for versioning
+getCurrCommit() {
+  echo `git rev-parse HEAD | tr -d "[ \r\n\']"`
+}
+
+# for versioning
+getCurrTag() {
+  echo `git describe --always --tags --abbrev=0 | tr -d "[v\r\n]"`
+}
+
+# for versioning
+getCurrBranch() {
+  echo `git rev-parse --abbrev-ref HEAD | tr -d "[\r\n ]"`
+}
+
+# for versioning
+commit=$(getCurrCommit)
+branch=$(getCurrBranch)
+tag=$(getCurrTag)
+
 # try and use the correct MD5 lib (depending on user OS darwin/linux)
 MD5=$(which md5 || which md5sum)
 
 # build shaman
 echo "Building SHAMAN and uploading it to 's3://tools.nanopack.io/shaman'"
-gox -osarch "linux/amd64" -output="./build/{{.OS}}/{{.Arch}}/shaman"
+gox -ldflags="-X main.version=${tag} -X main.branch=${branch} -X main.commit=${commit}" -osarch "linux/amd64" -output="./build/{{.OS}}/{{.Arch}}/shaman"
 
 # look through each os/arch/file and generate an md5 for each
 echo "Generating md5s..."

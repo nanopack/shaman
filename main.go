@@ -90,7 +90,7 @@ func readConfig(ccmd *cobra.Command, args []string) error {
 
 func preFlight(ccmd *cobra.Command, args []string) error {
 	if config.Version {
-		fmt.Printf("shaman %s\n", VERSION)
+		fmt.Printf("shaman %s (git: %s %s)\n", version, branch, commit)
 		return fmt.Errorf("")
 	}
 

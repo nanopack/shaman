@@ -11,6 +11,7 @@ import (
 	sham "github.com/nanopack/shaman/core/common"
 )
 
+// Answers is the cached collection of dns records
 var Answers map[string]sham.Resource
 
 func init() {
@@ -127,7 +128,7 @@ func AddRecord(resource *sham.Resource) error {
 	return nil
 }
 
-// returns whether or not that domain exists
+// Exists returns whether or not that domain exists
 func Exists(domain string) bool {
 	sham.SanitizeDomain(&domain)
 	_, ok := Answers[domain]

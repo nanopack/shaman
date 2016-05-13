@@ -15,7 +15,7 @@ import (
 	"github.com/nanopack/shaman/server"
 )
 
-var nanopack = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{sham.Record{Address: "127.0.0.1"}}}
+var nanopack = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{{Address: "127.0.0.1"}}}
 
 func TestMain(m *testing.M) {
 	// manually configure

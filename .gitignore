@@ -2,3 +2,4 @@ shaman
 dns
 *.cover
 config.json
+build/

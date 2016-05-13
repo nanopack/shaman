@@ -1,4 +1,4 @@
-// Package "api" provides a restful interface to manage entries in the DNS database.
+// Package api provides a restful interface to manage entries in the DNS database.
 package api
 
 import (
@@ -25,9 +25,9 @@ type (
 )
 
 var (
-	auth         nanoauth.Auth
-	badJson      = errors.New("Bad JSON syntax received in body")
-	bodyReadFail = errors.New("Body Read Failed")
+	auth            nanoauth.Auth
+	errBadJson      = errors.New("Bad JSON syntax received in body")
+	errBodyReadFail = errors.New("Body Read Failed")
 )
 
 // Start starts shaman's http api
@@ -101,14 +101,14 @@ func parseBody(req *http.Request, v interface{}) error {
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		config.Log.Error(err.Error())
-		return bodyReadFail
+		return errBodyReadFail
 	}
 	defer req.Body.Close()
 
 	// parse body and store in v
 	err = json.Unmarshal(b, v)
 	if err != nil {
-		return badJson
+		return errBadJson
 	}
 
 	return nil
