@@ -20,7 +20,6 @@ shaman add -d nanopack.io -A 127.0.0.1
 dig @localhost nanopack.io +short
 # 127.0.0.1
 
-
 # Congratulations!
 ```
 

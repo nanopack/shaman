@@ -50,7 +50,7 @@ func TestDNS(t *testing.T) {
 		t.Errorf("Response doesn't match expected - %+q", r.Answer[0].String())
 	}
 
-	r, err = ResolveIt("nanobox.io", dns.TypeA)
+	r, err = ResolveIt("a.b.nanobox.io", dns.TypeA)
 	if err != nil {
 		t.Errorf("Failed to get record - %v", err)
 	}

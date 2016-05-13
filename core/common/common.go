@@ -40,7 +40,7 @@ func SanitizeDomain(domain *string) {
 	}
 }
 
-// UnsanitizeDomain ensures the domain ends with a `.`
+// UnsanitizeDomain ensures the domain does not end with a `.`
 func UnsanitizeDomain(domain *string) {
 	t := []byte(*domain)
 	if len(t) > 0 && t[len(t)-1] == '.' {

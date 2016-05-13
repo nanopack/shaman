@@ -3,6 +3,7 @@ package server
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/miekg/dns"
 
@@ -45,13 +46,18 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 // answerQuestion returns resource record answers for the domain in question
 func answerQuestion(question dns.Question) []dns.RR {
 	answers := make([]dns.RR, 0)
-	r, _ := shaman.GetRecord(question.Name)
-	records := r.StringSlice()
-	// fmt.Printf("Records received - %+q\n", records)
-	for _, record := range records {
+
+	// get the resource (check memory, cache, and (todo:) upstream)
+	r, err := shaman.GetRecord(question.Name)
+	if err != nil {
+		config.Log.Trace("Failed to get records for '%s' - %v", question.Name, err)
+	}
+
+	// validate the records and append correct type to answers[]
+	for _, record := range r.StringSlice() {
 		entry, err := dns.NewRR(record)
 		if err != nil {
-			config.Log.Trace("Failed to create RR from record - %v", err)
+			config.Log.Debug("Failed to create RR from record - %v", err)
 			continue
 		}
 		entry.Header().Name = question.Name
@@ -60,5 +66,35 @@ func answerQuestion(question dns.Question) []dns.RR {
 		}
 	}
 
+	// todo: should `shaman.GetRecord` be wildcard aware (*.domain.com) or is this ok
+	// recursively resolve if no records found
+	if len(answers) == 0 {
+		question.Name = stripSubdomain(question.Name)
+		if len(question.Name) > 0 {
+			config.Log.Trace("Checking again with '%v'", question.Name)
+			return answerQuestion(question)
+		}
+	}
+
 	return answers
+}
+
+// stripSubdomain strips off the subbest domain, returning the domain (won't return TLD)
+func stripSubdomain(name string) string {
+	words := 3 // assume rooted domain (end with '.')
+	// handle edge case of unrooted domain
+	t := []byte(name)
+	if len(t) > 0 && t[len(t)-1] != '.' {
+		words = 2
+	}
+
+	config.Log.Trace("Stripping subdomain from '%v'", name)
+	names := strings.Split(name, ".")
+
+	// prevent searching for just 'com.' (["domain", "com", ""])
+	if len(names) > words {
+		return strings.Join(names[1:], ".")
+	} else {
+		return ""
+	}
 }
