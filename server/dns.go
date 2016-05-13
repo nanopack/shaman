@@ -94,7 +94,6 @@ func stripSubdomain(name string) string {
 	// prevent searching for just 'com.' (["domain", "com", ""])
 	if len(names) > words {
 		return strings.Join(names[1:], ".")
-	} else {
-		return ""
 	}
+	return ""
 }

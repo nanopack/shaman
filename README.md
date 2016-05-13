@@ -1,6 +1,8 @@
 [![shaman logo](http://nano-assets.gopagoda.io/readme-headers/shaman.png)](http://nanobox.io/open-source#shaman)  
 [![Build Status](https://travis-ci.org/nanopack/shaman.svg)](https://travis-ci.org/nanopack/shaman)
 [![GoDoc](https://godoc.org/github.com/nanopack/shaman?status.svg)](https://godoc.org/github.com/nanopack/shaman)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nanopack/shaman)](https://goreportcard.com/report/github.com/nanopack/shaman)
+<!-- [![GoCover](https://gocover.io/_badge/github.com/nanopack/shaman)](https://gocover.io/github.com/nanopack/shaman) -->
 
 # Shaman
 
@@ -208,6 +210,10 @@ Fields:
 - v0.0.3 (May 12, 2016)
   - Tests for DNS server
   - Start Server Insecure
+
+
+## Contributing
+Contributions to shaman are welcome and encouraged. Shaman is a [Nanobox](https://nanobox.io) project and contributions should follow the [Nanobox Contribution Process & Guidelines](https://docs.nanobox.io/contributing/).
 
 
 [![oss logo](http://nano-assets.gopagoda.io/open-src/nanobox-open-src.png)](http://nanobox.io/open-source)

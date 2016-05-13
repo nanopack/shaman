@@ -1,4 +1,4 @@
-// Package "cache" provides a pluggable backend for persistant record storage.
+// Package cache provides a pluggable backend for persistent record storage.
 package cache
 
 import (
@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	storage       cacher
-	noRecordError = errors.New("No Record Found")
+	storage          cacher
+	errNoRecordError = errors.New("No Record Found")
 )
 
 // The cacher interface is what all the backends [will] implement
@@ -26,7 +26,7 @@ type cacher interface {
 	listRecords() ([]shaman.Resource, error)
 }
 
-// Set default cacher and initialize it
+// Initialize sets default cacher and initialize it
 func Initialize() error {
 	u, err := url.Parse(config.L2Connect)
 	if err != nil {
@@ -54,7 +54,7 @@ func Initialize() error {
 	return err
 }
 
-// AddRecord adds a record to the persistant cache
+// AddRecord adds a record to the persistent cache
 func AddRecord(resource *shaman.Resource) error {
 	if storage == nil {
 		return nil
@@ -63,7 +63,7 @@ func AddRecord(resource *shaman.Resource) error {
 	return storage.addRecord(resource)
 }
 
-// GetRecord gets a record to the persistant cache
+// GetRecord gets a record to the persistent cache
 func GetRecord(domain string) (*shaman.Resource, error) {
 	if storage == nil {
 		return nil, nil
@@ -73,7 +73,7 @@ func GetRecord(domain string) (*shaman.Resource, error) {
 	return storage.getRecord(domain)
 }
 
-// UpdateRecord updates a record in the persistant cache
+// UpdateRecord updates a record in the persistent cache
 func UpdateRecord(domain string, resource *shaman.Resource) error {
 	if storage == nil {
 		return nil
@@ -83,7 +83,7 @@ func UpdateRecord(domain string, resource *shaman.Resource) error {
 	return storage.updateRecord(domain, resource)
 }
 
-// DeleteRecord removes a record from the persistant cache
+// DeleteRecord removes a record from the persistent cache
 func DeleteRecord(domain string) error {
 	if storage == nil {
 		return nil
@@ -92,7 +92,7 @@ func DeleteRecord(domain string) error {
 	return storage.deleteRecord(domain)
 }
 
-// ResetRecords replaces all records in the persistant cache
+// ResetRecords replaces all records in the persistent cache
 func ResetRecords(resources *[]shaman.Resource) error {
 	if storage == nil {
 		return nil
@@ -104,7 +104,7 @@ func ResetRecords(resources *[]shaman.Resource) error {
 	return storage.resetRecords(resources)
 }
 
-// ListRecords lists all records in the persistant cache
+// ListRecords lists all records in the persistent cache
 func ListRecords() ([]shaman.Resource, error) {
 	if storage == nil {
 		return make([]shaman.Resource, 0), nil

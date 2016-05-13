@@ -1,4 +1,4 @@
-// Package "commands" provides the cli functionality.
+// Package commands provides the cli functionality.
 // Runnable commands are:
 //  add
 //  get
@@ -76,6 +76,7 @@ var (
 	full       bool
 )
 
+// ResetVars resets the flag vars (used for testing)
 func ResetVars() {
 	resource = shaman.Resource{}
 	record = shaman.Record{}

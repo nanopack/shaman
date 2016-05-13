@@ -49,7 +49,7 @@ func (self scribbleDb) getRecord(domain string) (*shaman.Resource, error) {
 	err := self.db.Read("hosts", domain, &resource)
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
-			err = noRecordError
+			err = errNoRecordError
 		}
 		return nil, err
 	}

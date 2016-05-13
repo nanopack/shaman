@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	nanopack  = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{sham.Record{Address: "127.0.0.1"}}}
-	nanopack2 = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{sham.Record{Address: "127.0.0.3"}}}
-	nanobox   = sham.Resource{Domain: "nanobox.io.", Records: []sham.Record{sham.Record{Address: "127.0.0.2"}}}
+	nanopack  = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{{Address: "127.0.0.1"}}}
+	nanopack2 = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{{Address: "127.0.0.3"}}}
+	nanobox   = sham.Resource{Domain: "nanobox.io.", Records: []sham.Record{{Address: "127.0.0.2"}}}
 	nanoBoth  = []sham.Resource{nanopack, nanobox}
 )
 
