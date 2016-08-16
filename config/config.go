@@ -1,4 +1,4 @@
-// Package "config" is a central location for configuration options. It also contains
+// Package config is a central location for configuration options. It also contains
 // config file parsing logic.
 package config
 

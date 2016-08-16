@@ -1,4 +1,4 @@
-// Package "shaman" contains the logic to add/remove DNS entries.
+// Package shaman contains the logic to add/remove DNS entries.
 package shaman
 
 // todo: atomic C.U.D.
@@ -104,12 +104,12 @@ func AddRecord(resource *sham.Resource) error {
 					resource.Records[j].Address == Answers[domain].Records[k].Address &&
 					resource.Records[j].Class == Answers[domain].Records[k].Class {
 					// if so, skip...
-					config.Log.Trace("Record exists in local cache, skipping")
+					config.Log.Trace("Record exists in local cache, skipping...")
 					goto next
 				}
 			}
 			// otherwise, add the record
-			config.Log.Trace("Record not in local cache, adding")
+			config.Log.Trace("Record not in local cache, adding...")
 			resource.Records = append(resource.Records, Answers[domain].Records[k])
 		next:
 		}

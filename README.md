@@ -202,6 +202,7 @@ Fields:
 ## Todo
 - atomic local cache updates
 - export in hosts file format
+- improve scribble add (adding before stored in cache overwrites)
 
 
 ## Changelog

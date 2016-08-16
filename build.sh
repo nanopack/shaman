@@ -26,7 +26,8 @@ MD5=$(which md5 || which md5sum)
 
 # build shaman
 echo "Building SHAMAN and uploading it to 's3://tools.nanopack.io/shaman'"
-gox -ldflags="-X main.version=${tag} -X main.branch=${branch} -X main.commit=${commit}" -osarch "linux/amd64" -output="./build/{{.OS}}/{{.Arch}}/shaman"
+gox -ldflags="-X main.version=${tag} -X main.branch=${branch} -X main.commit=${commit}" \
+  -osarch "linux/amd64" -output="./build/{{.OS}}/{{.Arch}}/shaman"
 
 # look through each os/arch/file and generate an md5 for each
 echo "Generating md5s..."
