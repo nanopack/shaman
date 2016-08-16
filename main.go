@@ -62,6 +62,11 @@ var (
 		SilenceErrors:     true,
 		SilenceUsage:      true,
 	}
+
+	// shaman version information (populated by go linker)
+	// -ldflags="-X main.version=${tag} -X main.commit=${commit}"
+	version string
+	commit  string
 )
 
 // add supported cli commands/flags
@@ -90,7 +95,7 @@ func readConfig(ccmd *cobra.Command, args []string) error {
 
 func preFlight(ccmd *cobra.Command, args []string) error {
 	if config.Version {
-		fmt.Printf("shaman %s (git: %s %s)\n", version, branch, commit)
+		fmt.Printf("shaman %s (%s)\n", version, commit)
 		return fmt.Errorf("")
 	}
 
