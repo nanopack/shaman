@@ -1,4 +1,4 @@
-// Package "common" contains common structs used in shaman
+// Package common contains common structs used in shaman
 package common
 
 import (

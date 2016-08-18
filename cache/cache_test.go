@@ -19,6 +19,7 @@ var (
 
 func TestMain(m *testing.M) {
 	// manually configure
+	// config.Log = lumber.NewConsoleLogger(lumber.LvlInt("trace"))
 	config.Log = lumber.NewConsoleLogger(lumber.LvlInt("FATAL"))
 
 	// run tests

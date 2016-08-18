@@ -18,11 +18,11 @@ var (
 // The cacher interface is what all the backends [will] implement
 type cacher interface {
 	initialize() error
-	addRecord(resource *shaman.Resource) error
+	addRecord(resource shaman.Resource) error
 	getRecord(domain string) (*shaman.Resource, error)
-	updateRecord(domain string, resource *shaman.Resource) error
+	updateRecord(domain string, resource shaman.Resource) error
 	deleteRecord(domain string) error
-	resetRecords(resources *[]shaman.Resource) error
+	resetRecords(resources []shaman.Resource) error
 	listRecords() ([]shaman.Resource, error)
 }
 
@@ -36,6 +36,10 @@ func Initialize() error {
 	switch u.Scheme {
 	case "scribble":
 		storage = &scribbleDb{}
+	case "postgres":
+		storage = &postgresDb{}
+	case "postgresql":
+		storage = &postgresDb{}
 	case "none":
 		storage = nil
 	default:
@@ -60,7 +64,7 @@ func AddRecord(resource *shaman.Resource) error {
 		return nil
 	}
 	resource.Validate()
-	return storage.addRecord(resource)
+	return storage.addRecord(*resource)
 }
 
 // GetRecord gets a record to the persistent cache
@@ -80,7 +84,7 @@ func UpdateRecord(domain string, resource *shaman.Resource) error {
 	}
 	shaman.SanitizeDomain(&domain)
 	resource.Validate()
-	return storage.updateRecord(domain, resource)
+	return storage.updateRecord(domain, *resource)
 }
 
 // DeleteRecord removes a record from the persistent cache
@@ -101,7 +105,7 @@ func ResetRecords(resources *[]shaman.Resource) error {
 		(*resources)[i].Validate()
 	}
 
-	return storage.resetRecords(resources)
+	return storage.resetRecords(*resources)
 }
 
 // ListRecords lists all records in the persistent cache

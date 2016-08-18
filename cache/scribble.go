@@ -36,8 +36,8 @@ func (self *scribbleDb) initialize() error {
 	return nil
 }
 
-func (self scribbleDb) addRecord(resource *shaman.Resource) error {
-	err := self.db.Write("hosts", resource.Domain, *resource)
+func (self scribbleDb) addRecord(resource shaman.Resource) error {
+	err := self.db.Write("hosts", resource.Domain, resource)
 	if err != nil {
 		err = fmt.Errorf("Failed to save record - %v", err)
 	}
@@ -56,7 +56,7 @@ func (self scribbleDb) getRecord(domain string) (*shaman.Resource, error) {
 	return &resource, nil
 }
 
-func (self scribbleDb) updateRecord(domain string, resource *shaman.Resource) error {
+func (self scribbleDb) updateRecord(domain string, resource shaman.Resource) error {
 	if domain != resource.Domain {
 		err := self.deleteRecord(domain)
 		if err != nil {
@@ -79,10 +79,10 @@ func (self scribbleDb) deleteRecord(domain string) error {
 	return err
 }
 
-func (self scribbleDb) resetRecords(resources *[]shaman.Resource) (err error) {
+func (self scribbleDb) resetRecords(resources []shaman.Resource) (err error) {
 	self.db.Delete("hosts", "")
-	for i := range *resources {
-		err = self.db.Write("hosts", (*resources)[i].Domain, (*resources)[i])
+	for i := range resources {
+		err = self.db.Write("hosts", resources[i].Domain, resources[i])
 		if err != nil {
 			err = fmt.Errorf("Failed to save records - %v", err)
 		}

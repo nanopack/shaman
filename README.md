@@ -202,6 +202,7 @@ Fields:
 ## Todo
 - atomic local cache updates
 - export in hosts file format
+- improve scribble add (adding before stored in cache overwrites)
 
 
 ## Changelog
@@ -210,6 +211,8 @@ Fields:
 - v0.0.3 (May 12, 2016)
   - Tests for DNS server
   - Start Server Insecure
+- v0.0.4 (Aug 16, 2016)
+  - Postgresql as a backend
 
 
 ## Contributing

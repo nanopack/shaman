@@ -1,4 +1,4 @@
-// Package "server" contains logic to handle DNS requests.
+// Package server contains logic to handle DNS requests.
 package server
 
 import (

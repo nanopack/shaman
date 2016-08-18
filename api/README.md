@@ -12,9 +12,9 @@ Small, lightweight, api-driven dns server.
 | **POST** /records | Adds the domain and full record | json domain object | json domain object |
 | **PUT** /records | Update all domains and records (replaces all) | json array of domain objects | json array of domain objects |
 | **GET** /records | Returns a list of domains we have records for | nil | string array of domains |
-| **PUT** /records/{id} | Update domain's records (replaces all) | json domain object | json domain object |
-| **GET** /records/{id} | Returns the records for that domain | nil | json domain object |
-| **DELETE** /records/{id} | Delete a domain | nil | success message |
+| **PUT** /records/{domain} | Update domain's records (replaces all) | json domain object | json domain object |
+| **GET** /records/{domain} | Returns the records for that domain | nil | json domain object |
+| **DELETE** /records/{domain} | Delete a domain | nil | success message |
 
 ## Usage Example:
 
