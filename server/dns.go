@@ -30,20 +30,20 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 
 		for _, question := range message.Question {
 			answers := answerQuestion(strings.ToLower(question.Name), question.Qtype)
-			for i := range answers {
-				message.Answer = append(message.Answer, answers[i])
-			}
-		}
-		if (len(message.Answer) == 0 ){
-			// If there are no records, go back through and search for SOA records
-			for _, question := range message.Question {
-				answers := answerQuestion(strings.ToLower(question.Name), dns.TypeSOA)
+			if (len(answers) > 0){
 				for i := range answers {
-					message.Ns = append(message.Ns, answers[i])
+					message.Answer = append(message.Answer, answers[i])
+				}
+			}else{
+				// If there are no records, go back through and search for SOA records
+				for _, question := range message.Question {
+					answers := answerQuestion(strings.ToLower(question.Name), dns.TypeSOA)
+					for i := range answers {
+						message.Ns = append(message.Ns, answers[i])
+					}
 				}
 			}
 		}
-
 		if (len(message.Answer) == 0  && len(message.Ns) == 0 ){
 			message.Rcode = dns.RcodeNameError
 		}
