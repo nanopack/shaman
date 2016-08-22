@@ -29,7 +29,7 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 		message.Answer = make([]dns.RR, 0)
 
 		for _, question := range message.Question {
-			answers := answerQuestion(question.Name, question.Qtype)
+			answers := answerQuestion(strings.ToLower(question.Name), question.Qtype)
 			for i := range answers {
 				message.Answer = append(message.Answer, answers[i])
 			}
@@ -37,7 +37,7 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 		if (len(message.Answer) == 0 ){
 			// If there are no records, go back through and search for SOA records
 			for _, question := range message.Question {
-				answers := answerQuestion(question.Name, dns.TypeSOA)
+				answers := answerQuestion(strings.ToLower(question.Name), dns.TypeSOA)
 				for i := range answers {
 					message.Ns = append(message.Ns, answers[i])
 				}
