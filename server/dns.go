@@ -29,12 +29,22 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 		message.Answer = make([]dns.RR, 0)
 
 		for _, question := range message.Question {
-			answers := answerQuestion(question)
+			answers := answerQuestion(question.Name, question.Qtype)
 			for i := range answers {
 				message.Answer = append(message.Answer, answers[i])
 			}
 		}
-		if len(message.Answer) == 0 {
+		if (len(message.Answer) == 0 ){
+			// If there are no records, go back through and search for SOA records
+			for _, question := range message.Question {
+				answers := answerQuestion(question.Name, dns.TypeSOA)
+				for i := range answers {
+					message.Ns = append(message.Ns, answers[i])
+				}
+			}
+		}
+
+		if (len(message.Answer) == 0  && len(message.Ns) == 0 ){
 			message.Rcode = dns.RcodeNameError
 		}
 	default:
@@ -44,13 +54,13 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 }
 
 // answerQuestion returns resource record answers for the domain in question
-func answerQuestion(question dns.Question) []dns.RR {
+func answerQuestion(name string, qtype uint16) []dns.RR {
 	answers := make([]dns.RR, 0)
 
 	// get the resource (check memory, cache, and (todo:) upstream)
-	r, err := shaman.GetRecord(question.Name)
+	r, err := shaman.GetRecord(name)
 	if err != nil {
-		config.Log.Trace("Failed to get records for '%s' - %v", question.Name, err)
+		config.Log.Trace("Failed to get records for '%s' - %v", name, err)
 	}
 
 	// validate the records and append correct type to answers[]
@@ -60,8 +70,8 @@ func answerQuestion(question dns.Question) []dns.RR {
 			config.Log.Debug("Failed to create RR from record - %v", err)
 			continue
 		}
-		entry.Header().Name = question.Name
-		if entry.Header().Rrtype == question.Qtype || question.Qtype == dns.TypeANY {
+		entry.Header().Name = name
+		if entry.Header().Rrtype == qtype || qtype == dns.TypeANY {
 			answers = append(answers, entry)
 		}
 	}
@@ -69,10 +79,10 @@ func answerQuestion(question dns.Question) []dns.RR {
 	// todo: should `shaman.GetRecord` be wildcard aware (*.domain.com) or is this ok
 	// recursively resolve if no records found
 	if len(answers) == 0 {
-		question.Name = stripSubdomain(question.Name)
-		if len(question.Name) > 0 {
-			config.Log.Trace("Checking again with '%v'", question.Name)
-			return answerQuestion(question)
+		name = stripSubdomain(name)
+		if len(name) > 0 {
+			config.Log.Trace("Checking again with '%v'", name)
+			return answerQuestion(name, qtype)
 		}
 	}
 
