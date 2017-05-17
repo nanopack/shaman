@@ -56,7 +56,7 @@ Flags:
   -c, --config-file string        Configuration file to load
   -O, --dns-listen string         Listen address for DNS requests (ip:port) (default "127.0.0.1:53")
   -d, --domain string             Parent domain for requests (default ".")
-  -i, --insecure                  Disable tls key checking (client) and listen on http (api)
+  -i, --insecure                  Disable tls key checking (client) and listen on http (api). Also disables auth-token
   -2, --l2-connect string         Connection string for the l2 cache (default "scribble:///var/db/shaman")
   -l, --log-level string          Log level to output [fatal|error|info|debug|trace] (default "INFO")
   -s, --server                    Run in server mode
@@ -77,21 +77,21 @@ An optional config file can also be passed on startup:
 
 >config.json
 >```json
-{
-  "api-crt": "",
-  "api-key": "",
-  "api-key-password": "",
-  "api-listen": "127.0.0.1:1632",
-  "token": "secret",
-  "insecure": false,
-  "l2-connect": "scribble:///var/db/shaman",
-  "ttl": 60,
-  "domain": ".",
-  "dns-listen": "127.0.0.1:53",
-  "log-level": "info",
-  "server": true
-}
-```
+>{
+>  "api-crt": "",
+>  "api-key": "",
+>  "api-key-password": "",
+>  "api-listen": "127.0.0.1:1632",
+>  "token": "secret",
+>  "insecure": false,
+>  "l2-connect": "scribble:///var/db/shaman",
+>  "ttl": 60,
+>  "domain": ".",
+>  "dns-listen": "127.0.0.1:53",
+>  "log-level": "info",
+>  "server": true
+>}
+>```
 
 #### L2 connection strings
 

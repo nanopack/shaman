@@ -30,7 +30,7 @@ Flags:
   -c, --config-file string        Configuration file to load
   -O, --dns-listen string         Listen address for DNS requests (ip:port) (default "127.0.0.1:53")
   -d, --domain string             Parent domain for requests (default ".")
-  -i, --insecure                  Disable tls key checking (client) and listen on http (api)
+  -i, --insecure                  Disable tls key checking (client) and listen on http (api). Also disables auth-token
   -2, --l2-connect string         Connection string for the l2 cache (default "scribble:///var/db/shaman")
   -l, --log-level string          Log level to output [fatal|error|info|debug|trace] (default "INFO")
   -s, --server                    Run in server mode

@@ -39,7 +39,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&ApiKeyPassword, "api-key-password", "p", ApiKeyPassword, "Password for SSL key")
 	cmd.PersistentFlags().StringVarP(&ApiListen, "api-listen", "H", ApiListen, "Listen address for the API (ip:port)")
 	cmd.PersistentFlags().StringVarP(&ApiToken, "token", "t", ApiToken, "Token for API Access")
-	cmd.PersistentFlags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Disable tls key checking (client) and listen on http (api)")
+	cmd.PersistentFlags().BoolVarP(&Insecure, "insecure", "i", Insecure, "Disable tls key checking (client) and listen on http (api). Also disables auth-token")
 
 	// dns
 	cmd.Flags().StringVarP(&L2Connect, "l2-connect", "2", L2Connect, "Connection string for the l2 cache")
