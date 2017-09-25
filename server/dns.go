@@ -78,11 +78,24 @@ func answerQuestion(name string, qtype uint16) []dns.RR {
 
 	// todo: should `shaman.GetRecord` be wildcard aware (*.domain.com) or is this ok
 	// recursively resolve if no records found
-	if len(answers) == 0 {
-		name = stripSubdomain(name)
-		if len(name) > 0 {
-			config.Log.Trace("Checking again with '%v'", name)
-			return answerQuestion(name, qtype)
+	if len(answers) == 0 && []byte(name)[0] != '*' {
+		wildcard := strings.Join([]string{"*", stripSubdomain(name)}, ".")
+		if len(wildcard) > 2 {
+			config.Log.Trace("Checking again with '%v'", wildcard)
+			for _, entry := range answerQuestion(wildcard, qtype) {
+				entry.Header().Name = name
+				answers = append(answers, entry)
+			}
+			if len(answers) == 0 {
+				config.Log.Trace("Checking for CNAME for '%v'", wildcard)
+				for _, cname := range answerQuestion(wildcard, dns.TypeCNAME) {
+					config.Log.Trace("CNAME found; dereferencing '%v'", dns.Field(cname, 1))
+					for _, entry := range answerQuestion(dns.Field(cname, 1), qtype) {
+						entry.Header().Name = name
+						answers = append(answers, entry)
+					}
+				}
+			}
 		}
 	}
 
