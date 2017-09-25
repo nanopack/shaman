@@ -77,13 +77,34 @@ func answerQuestion(qtype uint16, name ...string) []dns.RR {
 		}
 	}
 
-	// recursively resolve if no records found (essentially provides wildcard
-	// registration support)
-	if len(answers) == 0 {
-		qName = stripSubdomain(qName)
-		if len(qName) > 0 {
-			config.Log.Trace("Checking again with '%v'", qName)
-			return answerQuestion(qtype, name[0], qName)
+	if len(answers) == 0 && []byte(qName)[0] != '*' {
+		wildcard := strings.Join([]string{"*", stripSubdomain(qName)}, ".")
+		if len(wildcard) > 2 {
+			config.Log.Trace("Checking again with '%v'", wildcard)
+			for _, entry := range answerQuestion(qtype, name[0], wildcard) {
+				entry.Header().Name = name[0]
+				answers = append(answers, entry)
+			}
+			if len(answers) == 0 {
+				config.Log.Trace("Checking for CNAME for '%v'", wildcard)
+				for _, cname := range answerQuestion(dns.TypeCNAME, name[0], wildcard) {
+					config.Log.Trace("CNAME found; dereferencing '%v'", dns.Field(cname, 1))
+					for _, entry := range answerQuestion(qtype, name[0], dns.Field(cname, 1)) {
+						entry.Header().Name = name[0]
+						answers = append(answers, entry)
+					}
+				}
+				if len(answers) == 0 {
+					qName = stripSubdomain(qName)
+					if len(qName) > 0 {
+						config.Log.Trace("Falling back to fake wildcards with '%v'", qName)
+						for _, entry := range answerQuestion(qtype, name[0], qName) {
+							entry.Header().Name = name[0]
+							answers = append(answers, entry)
+						}
+					}
+				}
+			}
 		}
 	}
 

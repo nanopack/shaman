@@ -16,6 +16,7 @@ import (
 )
 
 var nanopack = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{{Address: "127.0.0.1"}}}
+var wildcard = sham.Resource{Domain: "*.nanopack.io.", Records: []sham.Record{{Address: "nanopack.io", RType: "CNAME"}}}
 
 func TestMain(m *testing.M) {
 	// manually configure
@@ -39,6 +40,12 @@ func TestDNS(t *testing.T) {
 		t.FailNow()
 	}
 
+	err = shaman.AddRecord(&wildcard)
+	if err != nil {
+		t.Errorf("Failed to add wildcard record - %v", err)
+		t.FailNow()
+	}
+
 	r, err := ResolveIt("nanopack.io", dns.TypeA)
 	if err != nil {
 		t.Errorf("Failed to get record - %v", err)
@@ -56,6 +63,28 @@ func TestDNS(t *testing.T) {
 	}
 	if len(r.Answer) != 0 {
 		t.Error("Found non-existant record")
+	}
+
+	r, err = ResolveIt("wildcard.nanopack.io", dns.TypeA)
+	if err != nil {
+		t.Errorf("Failed to get record - %v", err)
+	}
+	if len(r.Answer) == 0 {
+		t.Error("Wildcard lookup failed")
+	}
+	if len(r.Answer) > 0 && r.Answer[0].String() != "wildcard.nanopack.io.\t60\tIN\tA\t127.0.0.1" {
+		t.Errorf("Response doesn't match expected - %+q", r.Answer[0].String())
+	}
+
+	r, err = ResolveIt("very.deep.cascading.wildcard.nanopack.io", dns.TypeA)
+	if err != nil {
+		t.Errorf("Failed to get record - %v", err)
+	}
+	if len(r.Answer) == 0 {
+		t.Error("Wildcard lookup failed")
+	}
+	if len(r.Answer) > 0 && r.Answer[0].String() != "very.deep.cascading.wildcard.nanopack.io.\t60\tIN\tA\t127.0.0.1" {
+		t.Errorf("Response doesn't match expected - %+q", r.Answer[0].String())
 	}
 
 	r, err = ResolveIt("nanopack.io", dns.TypeMX, true)
