@@ -29,22 +29,22 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 		message.Answer = make([]dns.RR, 0)
 
 		for _, question := range message.Question {
-			answers := answerQuestion(strings.ToLower(question.Name), question.Qtype)
-			if (len(answers) > 0){
+			answers := answerQuestion(strings.ToLower(question.Name), strings.ToLower(question.Name), question.Qtype)
+			if len(answers) > 0 {
 				for i := range answers {
 					message.Answer = append(message.Answer, answers[i])
 				}
-			}else{
+			} else {
 				// If there are no records, go back through and search for SOA records
 				for _, question := range message.Question {
-					answers := answerQuestion(strings.ToLower(question.Name), dns.TypeSOA)
+					answers := answerQuestion(strings.ToLower(question.Name), strings.ToLower(question.Name), dns.TypeSOA)
 					for i := range answers {
 						message.Ns = append(message.Ns, answers[i])
 					}
 				}
 			}
 		}
-		if (len(message.Answer) == 0  && len(message.Ns) == 0 ){
+		if len(message.Answer) == 0 && len(message.Ns) == 0 {
 			message.Rcode = dns.RcodeNameError
 		}
 	default:
@@ -54,7 +54,7 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 }
 
 // answerQuestion returns resource record answers for the domain in question
-func answerQuestion(name string, qtype uint16) []dns.RR {
+func answerQuestion(original, name string, qtype uint16) []dns.RR {
 	answers := make([]dns.RR, 0)
 
 	// get the resource (check memory, cache, and (todo:) upstream)
@@ -70,7 +70,7 @@ func answerQuestion(name string, qtype uint16) []dns.RR {
 			config.Log.Debug("Failed to create RR from record - %v", err)
 			continue
 		}
-		entry.Header().Name = name
+		entry.Header().Name = original
 		if entry.Header().Rrtype == qtype || qtype == dns.TypeANY {
 			answers = append(answers, entry)
 		}
@@ -82,7 +82,7 @@ func answerQuestion(name string, qtype uint16) []dns.RR {
 		name = stripSubdomain(name)
 		if len(name) > 0 {
 			config.Log.Trace("Checking again with '%v'", name)
-			return answerQuestion(name, qtype)
+			return answerQuestion(original, name, qtype)
 		}
 	}
 
