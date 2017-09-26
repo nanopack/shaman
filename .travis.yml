@@ -1,5 +1,5 @@
 language: go
-go: 1.6
+go: 1.7
 
 install: go get -t -v .
 script: go test -cover -v ./...
