@@ -41,6 +41,7 @@ func Initialize() error {
 	case "postgresql":
 		storage = &postgresDb{}
 	case "consul":
+		config.Log.Info("Using consul for cache")
 		storage = &consulDb{}
 	case "none":
 		storage = nil

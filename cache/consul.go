@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"log"
 	"net/url"
 
 	"github.com/nanopack/shaman/config"
@@ -24,6 +25,9 @@ func addPrefix(in string) string {
 
 func (client *consulDb) initialize() error {
 	u, err := url.Parse(config.L2Connect)
+	log.Println(u.Host)
+	log.Println(u.Scheme)
+	log.Println(u)
 	if err != nil {
 		return err
 	}
@@ -82,7 +86,7 @@ func (client consulDb) updateRecord(domain string, resource shaman.Resource) err
 
 func (client consulDb) deleteRecord(domain string) error {
 	kvHandler := client.db.KV()
-	_, err := kvHandler.Delete(domain, nil)
+	_, err := kvHandler.Delete(addPrefix(domain), nil)
 	if err != nil {
 		return err
 	}
