@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"net/url"
 
 	"github.com/nanopack/shaman/config"
@@ -91,11 +92,17 @@ func (client consulDb) deleteRecord(domain string) error {
 
 func (client consulDb) resetRecords(resources []shaman.Resource) error {
 	kvHandler := client.db.KV()
-	_, err := kvHandler.DeleteTree("domains", nil)
+	_, err := kvHandler.DeleteTree(prefix, nil)
 	if err != nil {
 		return err
 	}
 
+	for i := range resources {
+		err = client.addRecord(resources[i]) // prevents duplicates
+		if err != nil {
+			return fmt.Errorf("Failed to save records - %v", err)
+		}
+	}
 	return nil
 }
 
