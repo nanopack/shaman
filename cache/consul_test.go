@@ -10,7 +10,7 @@ import (
 
 // test consul cache init
 func TestConsulInitialize(t *testing.T) {
-	config.L2Connect = "http://127.0.0.1:8500"
+	config.L2Connect = "consul:///127.0.0.1:8500"
 	err := cache.Initialize()
 	cache.Initialize()
 	if err != nil {

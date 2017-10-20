@@ -30,7 +30,7 @@ func (client *consulDb) initialize() error {
 
 	consulConfig := consul.DefaultNonPooledConfig()
 	consulConfig.Address = u.Host
-	consulConfig.Scheme = u.Scheme
+	consulConfig.Scheme = "http"
 	consulC, err := consul.NewClient(consulConfig)
 	if err != nil {
 		return err
