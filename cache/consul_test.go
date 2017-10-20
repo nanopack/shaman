@@ -10,7 +10,7 @@ import (
 
 // test consul cache init
 func TestConsulInitialize(t *testing.T) {
-	config.L2Connect = "consul:///127.0.0.1:8500"
+	config.L2Connect = "consul://127.0.0.1:8500"
 	err := cache.Initialize()
 	cache.Initialize()
 	if err != nil {
@@ -80,7 +80,7 @@ func TestConsulListRecords(t *testing.T) {
 }
 
 func consulReset() {
-	config.L2Connect = "http://127.0.0.1:8500"
+	config.L2Connect = "consul://127.0.0.1:8500"
 	cache.Initialize()
 	blank := make([]shaman.Resource, 0, 0)
 	cache.ResetRecords(&blank)
