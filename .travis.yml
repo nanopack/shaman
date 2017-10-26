@@ -5,4 +5,5 @@ before_script:
   - consul agent -client 0.0.0.0 -server -bootstrap-expect 1 -data-dir /tmp/consul &
 install: go get -t -v .
 script: 
+  - curl -v 127.0.0.1:8500/v1/status/leader
   - go test -cover -v ./...
