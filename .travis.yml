@@ -2,7 +2,7 @@ language: go
 go: 1.9
 before_script:
   - scripts/travis_consul.sh
+  - consul agent -client 0.0.0.0 -server -bootstrap-expect 1 -data-dir /tmp/consul &
 install: go get -t -v .
 script: 
-  - consul agent -dev &
   - go test -cover -v ./...
