@@ -2,8 +2,6 @@ language: go
 go: 1.9
 before_script:
   - scripts/travis_consul.sh
-  - sleep 5
 install: go get -t -v .
 script: 
-  - curl -v 127.0.0.1:8500/v1/status/leader
   - go test -cover -v ./...
