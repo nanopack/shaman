@@ -2,7 +2,6 @@ language: go
 go: 1.9
 before_script:
   - scripts/travis_consul.sh
-  - consul agent -dev &
   - sleep 5
 install: go get -t -v .
 script: 
