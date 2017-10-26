@@ -40,6 +40,8 @@ func Initialize() error {
 		storage = &postgresDb{}
 	case "postgresql":
 		storage = &postgresDb{}
+	case "consul":
+		storage = &consulDb{}
 	case "none":
 		storage = nil
 	default:

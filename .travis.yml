@@ -1,5 +1,7 @@
 language: go
 go: 1.9
-
+before_script:
+  - scripts/travis_consul.sh
 install: go get -t -v .
-script: go test -cover -v ./...
+script: 
+  - go test -cover -v ./...
