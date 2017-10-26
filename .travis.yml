@@ -1,7 +1,7 @@
 language: go
 go: 1.9
 before_script:
-  - tools/travis_consul.sh
+  - scripts/travis_consul.sh
 install: go get -t -v .
 script: 
   - consul agent -dev &
