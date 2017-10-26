@@ -2,7 +2,8 @@ language: go
 go: 1.9
 before_script:
   - scripts/travis_consul.sh
-  - consul agent -client 0.0.0.0 -server -bootstrap-expect 1 -data-dir /tmp/consul &
+  - consul agent -dev &
+  - sleep 5
 install: go get -t -v .
 script: 
   - curl -v 127.0.0.1:8500/v1/status/leader
