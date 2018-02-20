@@ -3,3 +3,4 @@ dns
 *.cover
 config.json
 build/
+vendor/*/
