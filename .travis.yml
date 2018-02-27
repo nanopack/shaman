@@ -1,5 +1,7 @@
 language: go
-go: 1.9
+
+go: "1.9"
+
 before_script:
   - scripts/travis_consul.sh
   - sudo -H pip install awscli
@@ -16,4 +18,4 @@ after_success:
   - 'if [ "$BRANCH" == "master" ]; then
     ./scripts/build.sh;
     ./scripts/upload.sh;
-    curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -H "Travis-API-Version: 3" -H "Authorization: token ${TRAVIS_TOKEN}" -d "{\"request\":{\"branch\":\"master\"}}" https://api.travis-ci.org/repo/nanobox-io%2Fnanobox-installers/requests;
+    fi'
