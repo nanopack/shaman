@@ -21,7 +21,7 @@ getCurrTag() {
 
 # build shaman
 echo "Building shaman..."
-gox -ldflags="-X main.version=$(getCurrTag) -X main.commit=$(getCurrCommit)" \
+gox -ldflags="-s -X main.version=$(getCurrTag) -X main.commit=$(getCurrCommit)" \
   -osarch "darwin/amd64 linux/amd64 windows/amd64" -output="./build/{{.OS}}/{{.Arch}}/shaman"
 
 # look through each os/arch/file and generate an md5 for each
