@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ApiDomain          = "shaman.nanobox.io"         // Domain for generating cert (if none passed)
 	ApiCrt             = ""                          // Path to SSL crt for API access
 	ApiKey             = ""                          // Path to SSL key for API access
 	ApiKeyPassword     = ""                          // Password for SSL key
@@ -34,6 +35,7 @@ var (
 // AddFlags adds the available cli flags
 func AddFlags(cmd *cobra.Command) {
 	// api
+	cmd.Flags().StringVarP(&ApiDomain, "api-domain", "a", ApiDomain, "Domain of generated cert (if none passed)")
 	cmd.Flags().StringVarP(&ApiCrt, "api-crt", "C", ApiCrt, "Path to SSL crt for API access")
 	cmd.Flags().StringVarP(&ApiKey, "api-key", "k", ApiKey, "Path to SSL key for API access")
 	cmd.Flags().StringVarP(&ApiKeyPassword, "api-key-password", "p", ApiKeyPassword, "Password for SSL key")
@@ -62,6 +64,7 @@ func LoadConfigFile() error {
 	}
 
 	// Set defaults to whatever might be there already
+	viper.SetDefault("api-domain", ApiDomain)
 	viper.SetDefault("api-crt", ApiCrt)
 	viper.SetDefault("api-key", ApiKey)
 	viper.SetDefault("api-key-password", ApiKeyPassword)
@@ -85,6 +88,7 @@ func LoadConfigFile() error {
 	}
 
 	// Set values. Config file will override commandline
+	ApiDomain = viper.GetString("api-domain")
 	ApiCrt = viper.GetString("api-crt")
 	ApiKey = viper.GetString("api-key")
 	ApiKeyPassword = viper.GetString("api-key-password")

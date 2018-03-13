@@ -32,24 +32,26 @@ var (
 
 // Start starts shaman's http api
 func Start() error {
+	auth.Header = "X-AUTH-TOKEN"
+
 	// handle config.Insecure
 	if config.Insecure {
 		config.Log.Info("Shaman listening at http://%s...", config.ApiListen)
-		return fmt.Errorf("API stopped - %v", http.ListenAndServe(config.ApiListen, routes()))
+		return fmt.Errorf("API stopped - %v", auth.ListenAndServe(config.ApiListen, config.ApiToken, routes()))
 	}
 
 	var cert *tls.Certificate
 	var err error
 	if config.ApiCrt == "" {
-		cert, err = nanoauth.Generate("shaman.nanobox.io")
+		cert, err = nanoauth.Generate(config.ApiDomain)
 	} else {
 		cert, err = nanoauth.Load(config.ApiCrt, config.ApiKey, config.ApiKeyPassword)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to generate or load cert - %s", err.Error())
 	}
+
 	auth.Certificate = cert
-	auth.Header = "X-AUTH-TOKEN"
 
 	config.Log.Info("Shaman listening at https://%v", config.ApiListen)
 

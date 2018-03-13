@@ -50,6 +50,7 @@ Available Commands:
 
 Flags:
   -C, --api-crt string            Path to SSL crt for API access
+  -a, --api-domain string         Domain of generated cert (if none passed) (default "shaman.nanobox.io")
   -k, --api-key string            Path to SSL key for API access
   -p, --api-key-password string   Password for SSL key
   -H, --api-listen string         Listen address for the API (ip:port) (default "127.0.0.1:1632")
@@ -78,6 +79,7 @@ An optional config file can also be passed on startup:
 >config.json
 >```json
 >{
+>  "api-domain": "shaman.nanobox.io",
 >  "api-crt": "",
 >  "api-key": "",
 >  "api-key-password": "",
