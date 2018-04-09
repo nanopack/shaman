@@ -65,6 +65,22 @@ func TestDNS(t *testing.T) {
 	if len(r.Answer) != 0 {
 		t.Error("Found non-existant record")
 	}
+	// test fallback
+	config.DnsFallBack = "8.8.8.8:53"
+	r, err = ResolveIt("www.google.com", dns.TypeA)
+	if err != nil {
+		t.Errorf("Failed to get record - %v", err)
+	}
+	if len(r.Answer) == 0 {
+		t.Error("No record found")
+	}
+
+	// reset fallback
+	config.DnsFallBack = ""
+	r, err = ResolveIt("www.google.com", dns.TypeA)
+	if len(r.Answer) != 0 {
+		t.Error("answer found for unregistered domain when fallback is off.")
+	}
 }
 
 func ResolveIt(domain string, rType uint16, badop ...bool) (*dns.Msg, error) {

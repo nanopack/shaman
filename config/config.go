@@ -23,6 +23,7 @@ var (
 	TTL            int = 60                          // Default TTL for DNS records
 	Domain             = "."                         // Parent domain for requests
 	DnsListen          = "127.0.0.1:53"              // Listen address for DNS requests (ip:port)
+	DnsFallBack        = ""                          // fallback dns server if record not found in cache, not used if empty
 
 	LogLevel   = "INFO" // Log level to output [fatal|error|info|debug|trace]
 	Server     = false  // Run in server mode
@@ -48,6 +49,7 @@ func AddFlags(cmd *cobra.Command) {
 	cmd.Flags().IntVarP(&TTL, "ttl", "T", TTL, "Default TTL for DNS records")
 	cmd.Flags().StringVarP(&Domain, "domain", "d", Domain, "Parent domain for requests")
 	cmd.Flags().StringVarP(&DnsListen, "dns-listen", "O", DnsListen, "Listen address for DNS requests (ip:port)")
+	cmd.Flags().StringVarP(&DnsFallBack, "fallback-dns", "f", DnsFallBack, "Fallback dns server address (ip:port), if not specified fallback is not used")
 
 	// core
 	cmd.Flags().StringVarP(&LogLevel, "log-level", "l", LogLevel, "Log level to output [fatal|error|info|debug|trace]")
@@ -77,6 +79,7 @@ func LoadConfigFile() error {
 	viper.SetDefault("dns-listen", DnsListen)
 	viper.SetDefault("log-level", LogLevel)
 	viper.SetDefault("server", Server)
+	viper.SetDefault("fallback-dns", DnsFallBack)
 
 	filename := filepath.Base(ConfigFile)
 	viper.SetConfigName(filename[:len(filename)-len(filepath.Ext(filename))])

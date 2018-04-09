@@ -3,6 +3,8 @@ package server
 
 import (
 	"fmt"
+	sham "github.com/nanopack/shaman/core/common"
+	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -58,10 +60,20 @@ func answerQuestion(qtype uint16, name ...string) []dns.RR {
 	answers := make([]dns.RR, 0)
 	qName := name[len(name)-1] // either `len` every time, or use var
 
-	// get the resource (check memory, cache, and (todo:) upstream)
+	// get the resource (check memory, cache, and upstream)
 	r, err := shaman.GetRecord(qName)
 	if err != nil {
-		config.Log.Trace("Failed to get records for '%s' - %v", qName, err)
+		// fetch from fallback server if fallback dns server is provided
+		if config.DnsFallBack != "" {
+			config.Log.Trace("Getting records for '%s' from fallback dns server '%s'", qName, config.DnsFallBack)
+			if resource, err := getAnswerFromFallBackServer(qName, config.DnsFallBack); err != nil {
+				config.Log.Trace("Failed to get records for '%s' from fallback dns server - %v", qName, err)
+			} else {
+				r = resource
+			}
+		} else {
+			config.Log.Trace("Failed to get records for '%s' - %v", qName, err)
+		}
 	}
 
 	// validate the records and append correct type to answers[]
@@ -107,4 +119,36 @@ func stripSubdomain(name string) string {
 		return strings.Join(names[1:], ".")
 	}
 	return ""
+}
+
+// getAnswerFromFallBackServer gets record from the fallback dns server
+func getAnswerFromFallBackServer(qName string, fallBackServer string) (sham.Resource, error) {
+	resource := sham.Resource{}
+	records := []sham.Record{}
+
+	c := new(dns.Client)
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(qName), dns.TypeA)
+	m.RecursionDesired = true
+
+	r, _, err := c.Exchange(m, fallBackServer)
+	if err != nil {
+		return resource, err
+	}
+
+	resource.Domain = qName
+	for _, r1 := range r.Answer {
+		record := sham.Record{}
+
+		record.TTL = int(r1.Header().Ttl)
+		record.RType = dns.Class(r1.Header().Class).String()
+		record.RType = dns.Type(r1.Header().Rrtype).String()
+		// for getting address
+		data := strings.Split(r1.String(), "\t")
+		record.Address = data[len(data)-1]
+
+		records = append(records, record)
+	}
+	resource.Records = records
+	return resource, nil
 }
