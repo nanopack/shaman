@@ -3,13 +3,13 @@ package server
 
 import (
 	"fmt"
-	sham "github.com/nanopack/shaman/core/common"
 	"strings"
 
 	"github.com/miekg/dns"
 
 	"github.com/nanopack/shaman/config"
 	"github.com/nanopack/shaman/core"
+	sham "github.com/nanopack/shaman/core/common"
 )
 
 // Start starts the DNS listener
