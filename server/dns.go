@@ -4,7 +4,6 @@ package server
 import (
 	"fmt"
 	sham "github.com/nanopack/shaman/core/common"
-	"github.com/pkg/errors"
 	"strings"
 
 	"github.com/miekg/dns"
