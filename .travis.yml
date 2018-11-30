@@ -13,7 +13,7 @@ install:
   - dep ensure update
 
 script:
-  - go test ./.. | grep vendor
+  - go test ./... | grep vendor
 
 after_success:
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
