@@ -9,11 +9,11 @@ before_script:
   - sudo -H pip install awscli
 
 install:
-  - go get github.com/kardianos/govendor
-  - govendor sync
+  - go get github.com/golang/dep
+  - dep ensure update
 
 script:
-  - govendor test +local -cover -v
+  - go test ./.. | grep vendor
 
 after_success:
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
