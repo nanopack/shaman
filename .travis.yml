@@ -9,7 +9,7 @@ before_script:
   - sudo -H pip install awscli
 
 install:
-  - go get github.com/golang/dep
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
   - dep ensure update
 
 script:
