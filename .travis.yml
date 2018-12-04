@@ -10,7 +10,6 @@ services:
 before_script:
   - scripts/travis_consul.sh
   - sudo -H pip install awscli
-  - psql -c 'create database travis_ci_test;' -U postgres
 
 install:
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
