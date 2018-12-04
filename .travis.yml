@@ -4,14 +4,17 @@ go: "1.9"
 
 go_import_path: github.com/nanopack/shaman
 
+services:
+  - postgresql
+
 before_script:
   - scripts/travis_consul.sh
   - sudo -H pip install awscli
+  - psql -c 'create database travis_ci_test;' -U postgres
 
 install:
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-  - dep ensure -update
-
+  - dep ensure
 script:
   - go test $(go list ./... | grep -v /vendor/) -cover
 
