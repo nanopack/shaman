@@ -1,19 +1,21 @@
 language: go
 
-go: "1.9"
+go: "1.11.1"
 
 go_import_path: github.com/nanopack/shaman
+
+services:
+  - postgresql
 
 before_script:
   - scripts/travis_consul.sh
   - sudo -H pip install awscli
 
 install:
-  - go get github.com/kardianos/govendor
-  - govendor sync
-
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - dep ensure
 script:
-  - govendor test +local -cover -v
+  - go test ./...
 
 after_success:
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
