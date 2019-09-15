@@ -16,6 +16,7 @@ import (
 )
 
 var nanopack = sham.Resource{Domain: "nanopack.io.", Records: []sham.Record{{Address: "127.0.0.1"}}}
+var rootname = sham.Resource{Domain: "nanopack.com.", Records: []sham.Record{{Address: "nanopack.io", RType: "CNAME"}}}
 
 func TestMain(m *testing.M) {
 	// manually configure
@@ -39,6 +40,12 @@ func TestDNS(t *testing.T) {
 		t.FailNow()
 	}
 
+	err = shaman.AddRecord(&rootname)
+	if err != nil {
+		t.Errorf("Failed to add root CNAME record - %v", err)
+		t.FailNow()
+	}
+
 	r, err := ResolveIt("nanopack.io", dns.TypeA)
 	if err != nil {
 		t.Errorf("Failed to get record - %v", err)
@@ -47,6 +54,17 @@ func TestDNS(t *testing.T) {
 		t.Error("No record found")
 	}
 	if len(r.Answer) > 0 && r.Answer[0].String() != "nanopack.io.\t60\tIN\tA\t127.0.0.1" {
+		t.Errorf("Response doesn't match expected - %+q", r.Answer[0].String())
+	}
+
+	r, err = ResolveIt("nanopack.com", dns.TypeA)
+	if err != nil {
+		t.Errorf("Failed to get record - %v", err)
+	}
+	if len(r.Answer) == 0 {
+		t.Error("No record found")
+	}
+	if len(r.Answer) > 0 && r.Answer[0].String() != "nanopack.com.\t60\tIN\tA\t127.0.0.1" {
 		t.Errorf("Response doesn't match expected - %+q", r.Answer[0].String())
 	}
 

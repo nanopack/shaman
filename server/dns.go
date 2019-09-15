@@ -85,6 +85,14 @@ func answerQuestion(qtype uint16, name ...string) []dns.RR {
 		entry.Header().Name = name[0]
 		if entry.Header().Rrtype == qtype || qtype == dns.TypeANY {
 			answers = append(answers, entry)
+		} else {
+			// dereference root domain CNAMEs for A and AAAA lookups
+			if stripSubdomain(qName) == "" && entry.Header().Rrtype == dns.TypeCNAME && (qtype == dns.TypeA || qtype == dns.TypeAAAA) {
+				for _, t := range answerQuestion(qtype, name[0], dns.Field(entry, 1)) {
+					t.Header().Name = name[0]
+					answers = append(answers, t)
+				}
+			}
 		}
 	}
 
