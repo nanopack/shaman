@@ -8,7 +8,7 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/nanopack/shaman/config"
-	"github.com/nanopack/shaman/core"
+	shaman "github.com/nanopack/shaman/core"
 	sham "github.com/nanopack/shaman/core/common"
 )
 
@@ -34,6 +34,7 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 			if len(answers) > 0 {
 				for i := range answers {
 					message.Answer = append(message.Answer, answers[i])
+					message.Authoritative = true
 				}
 			} else {
 				// If there are no records, go back through and search for SOA records
@@ -41,6 +42,7 @@ func handlerFunc(res dns.ResponseWriter, req *dns.Msg) {
 					answers := answerQuestion(dns.TypeSOA, strings.ToLower(question.Name))
 					for i := range answers {
 						message.Ns = append(message.Ns, answers[i])
+						message.Authoritative = true
 					}
 				}
 			}
